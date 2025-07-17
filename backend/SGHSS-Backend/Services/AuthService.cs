@@ -5,6 +5,7 @@ using SGHSS_Backend.Data;
 using SGHSS_Backend.DTOs.Auth;
 using SGHSS_Backend.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using SGHSS_Backend.Models.Exceptions;
 
 namespace SGHSS_Backend.Services;

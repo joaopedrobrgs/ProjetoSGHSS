@@ -28,16 +28,13 @@ public class AuthController : ControllerSGHSS
     [HttpPost("login")] // Define que este método responde a requisições POST para /api/auth/login
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        await using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             if (!ModelState.IsValid)
             {
                 throw new CustomException("Parâmetros incorretos.");
             }
-
             var response = await _authService.Authenticate(request, _context) ?? throw new CustomException(null, 401);
-
             return Ok(response);
         }
         catch (Exception ex)
