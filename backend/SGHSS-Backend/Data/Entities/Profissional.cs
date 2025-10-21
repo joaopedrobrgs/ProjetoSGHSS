@@ -8,6 +8,8 @@ public class Profissional
     public int IdProfissional { get; set; } // Corresponde a id_profissional no banco
     public int IdUsuario { get; set; } // Chave Estrangeira para Usuario
     public string NomeCompleto { get; set; }
+    public string Cpf { get; set; }
+    public string Rg { get; set; }
     public string CrmOuConselho { get; set; }
     public string Especialidade { get; set; }
     public string Telefone { get; set; }

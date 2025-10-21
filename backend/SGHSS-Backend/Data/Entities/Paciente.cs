@@ -15,6 +15,7 @@ public class Paciente
     public string Rg { get; set; }
     public string Sexo { get; set; }
     public string Convenio { get; set; }
+    public string? Email { get; set; } // Email do paciente (nullable)
 
     // Propriedades de navegação
     public virtual Usuario Usuario { get; set; } // Relacionamento 1:1 ou 1:0 com Usuario

@@ -27,6 +27,7 @@ public class SGHSSDbContext : DbContext
         modelBuilder.Entity<Paciente>().HasKey(p => p.IdPaciente);
         modelBuilder.Entity<Paciente>().Property(p => p.IdPaciente).ValueGeneratedOnAdd();
         modelBuilder.Entity<Paciente>().ToTable("Pacientes");
+    modelBuilder.Entity<Paciente>().Property(p => p.Email).HasColumnType("varchar(255)").HasMaxLength(255).IsRequired(false);
 
         modelBuilder.Entity<Profissional>().HasKey(ps => ps.IdProfissional);
         modelBuilder.Entity<Profissional>().Property(ps => ps.IdProfissional).ValueGeneratedOnAdd();
@@ -74,9 +75,12 @@ public class SGHSSDbContext : DbContext
         // modelBuilder.Entity<Usuario>().Property(u => u.Email).HasColumnName("user_email");
 
         // Configurações para UNIQUE constraints não inferidas
-        modelBuilder.Entity<Usuario>().HasIndex(u => u.Email).IsUnique();
-        modelBuilder.Entity<Paciente>().HasIndex(p => p.Cpf).IsUnique();
-        modelBuilder.Entity<Profissional>().HasIndex(ps => ps.CrmOuConselho).IsUnique();
+    modelBuilder.Entity<Usuario>().HasIndex(u => u.Email).IsUnique();
+    modelBuilder.Entity<Paciente>().HasIndex(p => p.Cpf).IsUnique();
+    modelBuilder.Entity<Paciente>().HasIndex(p => p.Rg).IsUnique().HasFilter("[Rg] IS NOT NULL AND [Rg] <> ''");
+    modelBuilder.Entity<Profissional>().HasIndex(ps => ps.CrmOuConselho).IsUnique();
+    modelBuilder.Entity<Profissional>().HasIndex(ps => ps.Cpf).IsUnique().HasFilter("[Cpf] IS NOT NULL AND [Cpf] <> ''");
+    modelBuilder.Entity<Profissional>().HasIndex(ps => ps.Rg).IsUnique().HasFilter("[Rg] IS NOT NULL AND [Rg] <> ''");
 
 
         base.OnModelCreating(modelBuilder);

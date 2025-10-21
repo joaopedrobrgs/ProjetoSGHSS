@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SGHSS_Backend.Data;
 
@@ -11,9 +12,11 @@ using SGHSS_Backend.Data;
 namespace SGHSS_Backend.Migrations
 {
     [DbContext(typeof(SGHSSDbContext))]
-    partial class SGHSSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251021233019_AddEmailToPacientes_AndUniqueIndexes")]
+    partial class AddEmailToPacientes_AndUniqueIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -119,8 +122,7 @@ namespace SGHSS_Backend.Migrations
                         .IsUnique();
 
                     b.HasIndex("Rg")
-                        .IsUnique()
-                        .HasFilter("[Rg] IS NOT NULL AND [Rg] <> ''");
+                        .IsUnique();
 
                     b.ToTable("Pacientes", (string)null);
                 });
@@ -171,8 +173,7 @@ namespace SGHSS_Backend.Migrations
                     b.HasKey("IdProfissional");
 
                     b.HasIndex("Cpf")
-                        .IsUnique()
-                        .HasFilter("[Cpf] IS NOT NULL AND [Cpf] <> ''");
+                        .IsUnique();
 
                     b.HasIndex("CrmOuConselho")
                         .IsUnique();
@@ -181,8 +182,7 @@ namespace SGHSS_Backend.Migrations
                         .IsUnique();
 
                     b.HasIndex("Rg")
-                        .IsUnique()
-                        .HasFilter("[Rg] IS NOT NULL AND [Rg] <> ''");
+                        .IsUnique();
 
                     b.ToTable("Profissionais", (string)null);
                 });

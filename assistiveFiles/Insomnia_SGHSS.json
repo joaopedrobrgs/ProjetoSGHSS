@@ -50,7 +50,7 @@
       "url": "{{ base_url }}/api/Auth/register",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"email\": \"paciente1@sghss.local\",\n  \"senha\": \"Paciente@123\",\n  \"perfil\": \"PACIENTE\",\n  \"pacienteData\": {\n    \"nomeCompleto\": \"Paciente Um\",\n    \"dataNascimento\": \"2000-01-01\",\n    \"cpf\": \"12345678900\",\n    \"telefone\": \"11911111111\",\n    \"endereco\": \"Rua A, 100\",\n    \"historicoClinico\": \"N/A\",\n    \"rg\": \"1111111\",\n    \"sexo\": \"M\",\n    \"convenio\": \"Unimed\"\n  }\n}"
+        "text": "{\n  \"email\": \"paciente1@sghss.local\",\n  \"senha\": \"Paciente@123\",\n  \"perfil\": \"PACIENTE\",\n  \"pacienteData\": {\n    \"nomeCompleto\": \"Paciente Um\",\n    \"dataNascimento\": \"2000-01-01\",\n    \"cpf\": \"12345678900\",\n    \"telefone\": \"11911111111\",\n    \"endereco\": \"Rua A, 100\",\n    \"historicoClinico\": \"N/A\",\n    \"rg\": \"1111111\",\n    \"sexo\": \"M\",\n    \"convenio\": \"Unimed\",\n    \"emailPaciente\": \"paciente1@dominio.com\"\n  }\n}"
       },
       "headers": [
         { "name": "Content-Type", "value": "application/json" }
@@ -65,7 +65,7 @@
       "url": "{{ base_url }}/api/Auth/register",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"email\": \"pro1@sghss.local\",\n  \"senha\": \"Pro@123\",\n  \"perfil\": \"PROFISSIONAL\",\n  \"profissionalData\": {\n    \"nomeCompleto\": \"Dra. Ana\",\n    \"crmOuConselho\": \"CRM-9999\",\n    \"especialidade\": \"Clínico Geral\",\n    \"telefone\": \"11922222222\",\n    \"emailProfissional\": \"ana@clinic.com\",\n    \"disponibilidadeAgenda\": \"Seg-Sex 08-17h\"\n  }\n}"
+        "text": "{\n  \"email\": \"pro1@sghss.local\",\n  \"senha\": \"Pro@123\",\n  \"perfil\": \"PROFISSIONAL\",\n  \"profissionalData\": {\n    \"nomeCompleto\": \"Dra. Ana\",\n    \"cpf\": \"98765432100\",\n    \"rg\": \"SP1234567\",\n    \"crmOuConselho\": \"CRM-9999\",\n    \"especialidade\": \"Clínico Geral\",\n    \"telefone\": \"11922222222\",\n    \"emailProfissional\": \"ana@clinic.com\",\n    \"disponibilidadeAgenda\": \"Seg-Sex 08-17h\"\n  }\n}"
       },
       "headers": [
         { "name": "Content-Type", "value": "application/json" }
@@ -109,7 +109,7 @@
       "url": "{{ base_url }}/api/Pacientes/1",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"nomeCompleto\": \"Paciente Um Atualizado\",\n  \"dataNascimento\": \"2000-01-01\",\n  \"cpf\": \"12345678900\",\n  \"telefone\": \"11911111112\",\n  \"endereco\": \"Rua A, 101\",\n  \"historicoClinico\": \"N/A\",\n  \"rg\": \"1111111\",\n  \"sexo\": \"M\",\n  \"convenio\": \"Unimed\"\n}"
+        "text": "{\n  \"nomeCompleto\": \"Paciente Um Atualizado\",\n  \"dataNascimento\": \"2000-01-01\",\n  \"cpf\": \"12345678900\",\n  \"telefone\": \"11911111112\",\n  \"endereco\": \"Rua A, 101\",\n  \"historicoClinico\": \"N/A\",\n  \"rg\": \"1111111\",\n  \"sexo\": \"M\",\n  \"convenio\": \"Unimed\",\n  \"emailPaciente\": \"paciente1.atualizado@dominio.com\"\n}"
       },
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ jwt_token }}" },
@@ -165,7 +165,7 @@
       "url": "{{ base_url }}/api/Profissionais/1",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"nomeCompleto\": \"Dra. Ana Medeiros\",\n  \"crmOuConselho\": \"CRM-9999\",\n  \"especialidade\": \"Clínico Geral\",\n  \"telefone\": \"11922223333\",\n  \"emailProfissional\": \"ana.m@clinic.com\",\n  \"disponibilidadeAgenda\": \"Seg-Sex 08-17h\"\n}"
+        "text": "{\n  \"nomeCompleto\": \"Dra. Ana Medeiros\",\n  \"cpf\": \"98765432100\",\n  \"rg\": \"SP1234567\",\n  \"crmOuConselho\": \"CRM-9999\",\n  \"especialidade\": \"Clínico Geral\",\n  \"telefone\": \"11922223333\",\n  \"emailProfissional\": \"ana.m@clinic.com\",\n  \"disponibilidadeAgenda\": \"Seg-Sex 08-17h\"\n}"
       },
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ jwt_token }}" },
@@ -253,6 +253,36 @@
       "url": "{{ base_url }}/api/Consultas/1",
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ jwt_token }}" }
+      ]
+    },
+    {
+      "_id": "req_register_paciente_dup",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Register - Paciente (CPF/RG duplicados - 409)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/Auth/register",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"paciente2@sghss.local\",\n  \"senha\": \"Paciente@123\",\n  \"perfil\": \"PACIENTE\",\n  \"pacienteData\": {\n    \"nomeCompleto\": \"Paciente Dois\",\n    \"dataNascimento\": \"2001-02-02\",\n    \"cpf\": \"12345678900\",\n    \"telefone\": \"11933334444\",\n    \"endereco\": \"Rua B, 200\",\n    \"historicoClinico\": \"N/A\",\n    \"rg\": \"1111111\",\n    \"sexo\": \"F\",\n    \"convenio\": \"Amil\",\n    \"emailPaciente\": \"paciente2@dominio.com\"\n  }\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_register_profissional_dup",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Register - Profissional (CPF/RG duplicados - 409)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/Auth/register",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"pro2@sghss.local\",\n  \"senha\": \"Pro@123\",\n  \"perfil\": \"PROFISSIONAL\",\n  \"profissionalData\": {\n    \"nomeCompleto\": \"Dr. Bruno\",\n    \"cpf\": \"98765432100\",\n    \"rg\": \"SP1234567\",\n    \"crmOuConselho\": \"CRM-8888\",\n    \"especialidade\": \"Ortopedia\",\n    \"telefone\": \"11955556666\",\n    \"emailProfissional\": \"bruno@clinic.com\",\n    \"disponibilidadeAgenda\": \"Seg-Sex 08-17h\"\n  }\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
       ]
     }
   ]

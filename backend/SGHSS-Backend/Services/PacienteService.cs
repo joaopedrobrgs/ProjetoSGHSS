@@ -35,6 +35,7 @@ public class PacienteService
                                  Rg = p.Rg,
                                  Sexo = p.Sexo,
                                  Convenio = p.Convenio,
+                                 EmailPaciente = p.Email,
                                  EmailUsuario = p.Usuario.Email // Pega o email do usuário se existir
                              })
                              .ToListAsync();
@@ -68,6 +69,7 @@ public class PacienteService
             Rg = paciente.Rg,
             Sexo = paciente.Sexo,
             Convenio = paciente.Convenio,
+            EmailPaciente = paciente.Email,
             EmailUsuario = paciente.Usuario.Email
         };
     }
@@ -108,6 +110,11 @@ public class PacienteService
             paciente.Convenio = request.Convenio;
         }
 
+        if (!string.IsNullOrEmpty(request.EmailPaciente))
+        {
+            paciente.Email = request.EmailPaciente;
+        }
+
         await context.SaveChangesAsync();
 
         // Retorna o paciente atualizado, buscando o email do usuário se houver
@@ -130,6 +137,7 @@ public class PacienteService
             Rg = updatedPaciente.Rg,
             Sexo = updatedPaciente.Sexo,
             Convenio = updatedPaciente.Convenio,
+            EmailPaciente = updatedPaciente.Email,
             EmailUsuario = updatedPaciente.Usuario.Email
         };
     }

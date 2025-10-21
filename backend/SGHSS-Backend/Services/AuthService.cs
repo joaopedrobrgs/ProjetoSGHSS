@@ -3,6 +3,7 @@ using SGHSS_Backend.Data.Entities;
 using SGHSS_Backend.Data;
 using SGHSS_Backend.DTOs.Auth;
 using SGHSS_Backend.Utils;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using SGHSS_Backend.Models.Exceptions;
 
@@ -84,22 +85,36 @@ public class AuthService
                     throw new CustomException("Informe os dados do paciente.");
 
                 // Verificar se o CPF já está cadastrado para outro paciente
-                var cpfExistente = await context.Pacientes.AnyAsync(p => p.Cpf == request.PacienteData.Cpf);
+                var cpfLimpo = request.PacienteData.Cpf != null ? new string(request.PacienteData.Cpf.Where(char.IsDigit).ToArray()) : null;
+                var rgLimpo = request.PacienteData.Rg != null ? new string(request.PacienteData.Rg.Where(char.IsLetterOrDigit).ToArray()) : null;
+
+                if (string.IsNullOrWhiteSpace(cpfLimpo) || !Utils.Utils.ValidarCpf(cpfLimpo))
+                    throw new CustomException("Informe um CPF válido.", 400);
+
+                var cpfExistente = await context.Pacientes.AnyAsync(p => p.Cpf == cpfLimpo);
                 if (cpfExistente)
-                    throw new CustomException("Já existe um usuário cadastrado com o mesmo CPF.");
+                    throw new CustomException("Já existe um usuário cadastrado com o mesmo CPF.", 409);
+
+                if (!string.IsNullOrWhiteSpace(rgLimpo))
+                {
+                    var rgExistente = await context.Pacientes.AnyAsync(p => p.Rg == rgLimpo);
+                    if (rgExistente)
+                        throw new CustomException("Já existe um usuário cadastrado com o mesmo RG.", 409);
+                }
 
                 var novoPaciente = new Paciente
                 {
                     IdUsuario = novoUsuario.IdUsuario,
-                    NomeCompleto = request.PacienteData.NomeCompleto,
+                    NomeCompleto = request.PacienteData.NomeCompleto!,
                     DataNascimento = request.PacienteData.DataNascimento,
-                    Cpf = request.PacienteData.Cpf,
-                    Telefone = request.PacienteData.Telefone,
-                    Endereco = request.PacienteData.Endereco,
-                    HistoricoClinico = request.PacienteData.HistoricoClinico,
-                    Rg = request.PacienteData.Rg,
-                    Sexo = request.PacienteData.Sexo,
-                    Convenio = request.PacienteData.Convenio
+                    Cpf = cpfLimpo!,
+                    Telefone = request.PacienteData.Telefone ?? string.Empty,
+                    Endereco = request.PacienteData.Endereco ?? string.Empty,
+                    HistoricoClinico = request.PacienteData.HistoricoClinico ?? string.Empty,
+                    Rg = rgLimpo!,
+                    Sexo = request.PacienteData.Sexo!,
+                    Convenio = request.PacienteData.Convenio ?? string.Empty,
+                    Email = request.PacienteData.EmailPaciente
                 };
                 context.Pacientes.Add(novoPaciente);
                 await context.SaveChangesAsync();
@@ -109,15 +124,38 @@ public class AuthService
                 if (request.ProfissionalData == null)
                     throw new CustomException("Informe os dados do profissional.");
 
+                // Sanitizações
+                var cpfLimpo = request.ProfissionalData.Cpf != null ? new string(request.ProfissionalData.Cpf.Where(char.IsDigit).ToArray()) : null;
+                var rgLimpo = request.ProfissionalData.Rg != null ? new string(request.ProfissionalData.Rg.Where(char.IsLetterOrDigit).ToArray()) : null;
+
+                // Validar CPF
+                if (string.IsNullOrWhiteSpace(cpfLimpo) || !Utils.Utils.ValidarCpf(cpfLimpo))
+                    throw new CustomException("Informe um CPF válido.");
+
+                // Verificar se o CPF já está cadastrado entre profissionais
+                var cpfProfissionalExistente = await context.Profissionais.AnyAsync(ps => ps.Cpf == cpfLimpo);
+                if (cpfProfissionalExistente)
+                    throw new CustomException("Já existe um usuário cadastrado com o mesmo CPF.", 409);
+
+                // Verificar se o RG já está cadastrado entre profissionais
+                if (!string.IsNullOrWhiteSpace(rgLimpo))
+                {
+                    var rgProfissionalExistente = await context.Profissionais.AnyAsync(ps => ps.Rg == rgLimpo);
+                    if (rgProfissionalExistente)
+                        throw new CustomException("Já existe um usuário cadastrado com o mesmo RG.", 409);
+                }
+
                 // Verificar se o CRM/Conselho já está cadastrado
                 var crmExistente = await context.Profissionais.AnyAsync(ps => ps.CrmOuConselho == request.ProfissionalData.CrmOuConselho);
                 if (crmExistente)
-                    throw new CustomException("Já existe um usuário cadastrado com o mesmo CRM/Conselho.");
+                    throw new CustomException("Já existe um usuário cadastrado com o mesmo CRM/Conselho.", 409);
 
                 var novoProfissional = new Profissional
                 {
                     IdUsuario = novoUsuario.IdUsuario,
                     NomeCompleto = request.ProfissionalData.NomeCompleto,
+                    Cpf = cpfLimpo!,
+                    Rg = rgLimpo!,
                     CrmOuConselho = request.ProfissionalData.CrmOuConselho,
                     Especialidade = request.ProfissionalData.Especialidade,
                     Telefone = request.ProfissionalData.Telefone,

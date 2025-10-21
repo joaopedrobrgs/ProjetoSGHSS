@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SGHSS_Backend.Data;
 
@@ -11,9 +12,11 @@ using SGHSS_Backend.Data;
 namespace SGHSS_Backend.Migrations
 {
     [DbContext(typeof(SGHSSDbContext))]
-    partial class SGHSSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251021232039_AddCpfRgToProfissional")]
+    partial class AddCpfRgToProfissional
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -79,10 +82,6 @@ namespace SGHSS_Backend.Migrations
                     b.Property<DateTime>("DataNascimento")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Email")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
                     b.Property<string>("Endereco")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -100,7 +99,7 @@ namespace SGHSS_Backend.Migrations
 
                     b.Property<string>("Rg")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Sexo")
                         .IsRequired()
@@ -118,10 +117,6 @@ namespace SGHSS_Backend.Migrations
                     b.HasIndex("IdUsuario")
                         .IsUnique();
 
-                    b.HasIndex("Rg")
-                        .IsUnique()
-                        .HasFilter("[Rg] IS NOT NULL AND [Rg] <> ''");
-
                     b.ToTable("Pacientes", (string)null);
                 });
 
@@ -135,7 +130,7 @@ namespace SGHSS_Backend.Migrations
 
                     b.Property<string>("Cpf")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CrmOuConselho")
                         .IsRequired()
@@ -162,7 +157,7 @@ namespace SGHSS_Backend.Migrations
 
                     b.Property<string>("Rg")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Telefone")
                         .IsRequired()
@@ -170,19 +165,11 @@ namespace SGHSS_Backend.Migrations
 
                     b.HasKey("IdProfissional");
 
-                    b.HasIndex("Cpf")
-                        .IsUnique()
-                        .HasFilter("[Cpf] IS NOT NULL AND [Cpf] <> ''");
-
                     b.HasIndex("CrmOuConselho")
                         .IsUnique();
 
                     b.HasIndex("IdUsuario")
                         .IsUnique();
-
-                    b.HasIndex("Rg")
-                        .IsUnique()
-                        .HasFilter("[Rg] IS NOT NULL AND [Rg] <> ''");
 
                     b.ToTable("Profissionais", (string)null);
                 });

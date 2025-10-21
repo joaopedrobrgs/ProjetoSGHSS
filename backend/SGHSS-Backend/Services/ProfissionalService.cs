@@ -3,6 +3,7 @@ using SGHSS_Backend.Data;
 using SGHSS_Backend.Data.Entities;
 using SGHSS_Backend.DTOs.Profissionais;
 using SGHSS_Backend.Models.Exceptions;
+using System.Linq;
 
 namespace SGHSS_Backend.Services;
 
@@ -25,6 +26,8 @@ public class ProfissionalService
                 IdProfissional = p.IdProfissional,
                 IdUsuario = p.IdUsuario,
                 NomeCompleto = p.NomeCompleto,
+                Cpf = p.Cpf,
+                Rg = p.Rg,
                 CrmOuConselho = p.CrmOuConselho,
                 Especialidade = p.Especialidade,
                 Telefone = p.Telefone,
@@ -46,6 +49,8 @@ public class ProfissionalService
             IdProfissional = p.IdProfissional,
             IdUsuario = p.IdUsuario,
             NomeCompleto = p.NomeCompleto,
+            Cpf = p.Cpf,
+            Rg = p.Rg,
             CrmOuConselho = p.CrmOuConselho,
             Especialidade = p.Especialidade,
             Telefone = p.Telefone,
@@ -66,6 +71,26 @@ public class ProfissionalService
             throw new CustomException("Usuário sem permissão para realizar essa ação.", 403);
 
         if (!string.IsNullOrEmpty(request.NomeCompleto)) p.NomeCompleto = request.NomeCompleto;
+        if (!string.IsNullOrEmpty(request.Cpf))
+        {
+            var cpfLimpo = new string(request.Cpf.Where(char.IsDigit).ToArray());
+            if (!Utils.Utils.ValidarCpf(cpfLimpo))
+                throw new CustomException("Informe um CPF válido.", 400);
+            bool cpfExists = await context.Profissionais.AnyAsync(x => x.IdProfissional != id && x.Cpf == cpfLimpo);
+            if (cpfExists)
+                throw new CustomException("Já existe profissional cadastrado com o mesmo CPF.", 409);
+            p.Cpf = cpfLimpo;
+        }
+
+        if (!string.IsNullOrEmpty(request.Rg))
+        {
+            var rgLimpo = new string(request.Rg.Where(char.IsLetterOrDigit).ToArray());
+            bool rgExists = await context.Profissionais.AnyAsync(x => x.IdProfissional != id && x.Rg == rgLimpo);
+            if (rgExists)
+                throw new CustomException("Já existe profissional cadastrado com o mesmo RG.", 409);
+            p.Rg = rgLimpo;
+        }
+
         if (!string.IsNullOrEmpty(request.CrmOuConselho))
         {
             // Garantir unicidade ao atualizar
@@ -78,7 +103,6 @@ public class ProfissionalService
         if (!string.IsNullOrEmpty(request.EmailProfissional)) p.EmailProfissional = request.EmailProfissional;
         if (!string.IsNullOrEmpty(request.DisponibilidadeAgenda)) p.DisponibilidadeAgenda = request.DisponibilidadeAgenda;
 
-        context.Profissionais.Update(p);
         await context.SaveChangesAsync();
 
         var atualizado = await context.Profissionais.Include(x => x.Usuario).FirstAsync(x => x.IdProfissional == id);
@@ -87,6 +111,8 @@ public class ProfissionalService
             IdProfissional = atualizado.IdProfissional,
             IdUsuario = atualizado.IdUsuario,
             NomeCompleto = atualizado.NomeCompleto,
+            Cpf = atualizado.Cpf,
+            Rg = atualizado.Rg,
             CrmOuConselho = atualizado.CrmOuConselho,
             Especialidade = atualizado.Especialidade,
             Telefone = atualizado.Telefone,
