@@ -17,10 +17,12 @@ public class JwtTokenGenerator
     public string GenerateToken(int userId, string email, string profile)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]); // Chave secreta do appsettings.json
-        var issuer = _configuration["Jwt:Issuer"];
-        var audience = _configuration["Jwt:Audience"];
-        var expiresInMinutes = double.Parse(_configuration["Jwt:ExpiresInMinutes"]);
+        var keyString = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key (Jwt:Key) não configurada.");
+        var key = Encoding.ASCII.GetBytes(keyString);
+        var issuer = _configuration["Jwt:Issuer"] ?? "SGHSS_API";
+        var audience = _configuration["Jwt:Audience"] ?? "SGHSS_Users";
+        var expiresConfig = _configuration["Jwt:ExpiresInMinutes"];
+        var expiresInMinutes = !string.IsNullOrWhiteSpace(expiresConfig) && double.TryParse(expiresConfig, out var m) ? m : 60d;
 
         var claims = new ClaimsIdentity(new Claim[]
         {

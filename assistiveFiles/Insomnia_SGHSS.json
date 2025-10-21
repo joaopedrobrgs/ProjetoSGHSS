@@ -1,0 +1,259 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-10-21T22:30:00.000Z",
+  "__export_source": "insomnia.desktop.app:generated",
+  "resources": [
+    {
+      "_id": "wrk_sghss",
+      "_type": "workspace",
+      "name": "SGHSS API",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_sghss",
+      "_type": "environment",
+      "parentId": "wrk_sghss",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "https://localhost:7098",
+        "jwt_token": ""
+      }
+    },
+    {
+      "_id": "fld_auth",
+      "_type": "request_group",
+      "parentId": "wrk_sghss",
+      "name": "Auth"
+    },
+    {
+      "_id": "req_login",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Login",
+      "method": "POST",
+      "url": "{{ base_url }}/api/Auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"admin@sghss.local\",\n  \"senha\": \"Admin@123\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_register_paciente",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Register - Paciente",
+      "method": "POST",
+      "url": "{{ base_url }}/api/Auth/register",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"paciente1@sghss.local\",\n  \"senha\": \"Paciente@123\",\n  \"perfil\": \"PACIENTE\",\n  \"pacienteData\": {\n    \"nomeCompleto\": \"Paciente Um\",\n    \"dataNascimento\": \"2000-01-01\",\n    \"cpf\": \"12345678900\",\n    \"telefone\": \"11911111111\",\n    \"endereco\": \"Rua A, 100\",\n    \"historicoClinico\": \"N/A\",\n    \"rg\": \"1111111\",\n    \"sexo\": \"M\",\n    \"convenio\": \"Unimed\"\n  }\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_register_profissional",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Register - Profissional",
+      "method": "POST",
+      "url": "{{ base_url }}/api/Auth/register",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"pro1@sghss.local\",\n  \"senha\": \"Pro@123\",\n  \"perfil\": \"PROFISSIONAL\",\n  \"profissionalData\": {\n    \"nomeCompleto\": \"Dra. Ana\",\n    \"crmOuConselho\": \"CRM-9999\",\n    \"especialidade\": \"Clínico Geral\",\n    \"telefone\": \"11922222222\",\n    \"emailProfissional\": \"ana@clinic.com\",\n    \"disponibilidadeAgenda\": \"Seg-Sex 08-17h\"\n  }\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+
+    {
+      "_id": "fld_pacientes",
+      "_type": "request_group",
+      "parentId": "wrk_sghss",
+      "name": "Pacientes"
+    },
+    {
+      "_id": "req_pacientes_list",
+      "_type": "request",
+      "parentId": "fld_pacientes",
+      "name": "GET /api/Pacientes",
+      "method": "GET",
+      "url": "{{ base_url }}/api/Pacientes",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ jwt_token }}" }
+      ]
+    },
+    {
+      "_id": "req_pacientes_get",
+      "_type": "request",
+      "parentId": "fld_pacientes",
+      "name": "GET /api/Pacientes/{id}",
+      "method": "GET",
+      "url": "{{ base_url }}/api/Pacientes/1",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ jwt_token }}" }
+      ]
+    },
+    {
+      "_id": "req_pacientes_put",
+      "_type": "request",
+      "parentId": "fld_pacientes",
+      "name": "PUT /api/Pacientes/{id}",
+      "method": "PUT",
+      "url": "{{ base_url }}/api/Pacientes/1",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nomeCompleto\": \"Paciente Um Atualizado\",\n  \"dataNascimento\": \"2000-01-01\",\n  \"cpf\": \"12345678900\",\n  \"telefone\": \"11911111112\",\n  \"endereco\": \"Rua A, 101\",\n  \"historicoClinico\": \"N/A\",\n  \"rg\": \"1111111\",\n  \"sexo\": \"M\",\n  \"convenio\": \"Unimed\"\n}"
+      },
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ jwt_token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_pacientes_delete",
+      "_type": "request",
+      "parentId": "fld_pacientes",
+      "name": "DELETE /api/Pacientes/{id}",
+      "method": "DELETE",
+      "url": "{{ base_url }}/api/Pacientes/1",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ jwt_token }}" }
+      ]
+    },
+
+    {
+      "_id": "fld_profissionais",
+      "_type": "request_group",
+      "parentId": "wrk_sghss",
+      "name": "Profissionais"
+    },
+    {
+      "_id": "req_profissionais_list",
+      "_type": "request",
+      "parentId": "fld_profissionais",
+      "name": "GET /api/Profissionais",
+      "method": "GET",
+      "url": "{{ base_url }}/api/Profissionais",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ jwt_token }}" }
+      ]
+    },
+    {
+      "_id": "req_profissionais_get",
+      "_type": "request",
+      "parentId": "fld_profissionais",
+      "name": "GET /api/Profissionais/{id}",
+      "method": "GET",
+      "url": "{{ base_url }}/api/Profissionais/1",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ jwt_token }}" }
+      ]
+    },
+    {
+      "_id": "req_profissionais_put",
+      "_type": "request",
+      "parentId": "fld_profissionais",
+      "name": "PUT /api/Profissionais/{id}",
+      "method": "PUT",
+      "url": "{{ base_url }}/api/Profissionais/1",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nomeCompleto\": \"Dra. Ana Medeiros\",\n  \"crmOuConselho\": \"CRM-9999\",\n  \"especialidade\": \"Clínico Geral\",\n  \"telefone\": \"11922223333\",\n  \"emailProfissional\": \"ana.m@clinic.com\",\n  \"disponibilidadeAgenda\": \"Seg-Sex 08-17h\"\n}"
+      },
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ jwt_token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_profissionais_delete",
+      "_type": "request",
+      "parentId": "fld_profissionais",
+      "name": "DELETE /api/Profissionais/{id}",
+      "method": "DELETE",
+      "url": "{{ base_url }}/api/Profissionais/1",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ jwt_token }}" }
+      ]
+    },
+
+    {
+      "_id": "fld_consultas",
+      "_type": "request_group",
+      "parentId": "wrk_sghss",
+      "name": "Consultas"
+    },
+    {
+      "_id": "req_consultas_create",
+      "_type": "request",
+      "parentId": "fld_consultas",
+      "name": "POST /api/Consultas",
+      "method": "POST",
+      "url": "{{ base_url }}/api/Consultas",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"pacienteId\": 1,\n  \"profissionalId\": 1,\n  \"dataHora\": \"2025-10-22T14:00:00\",\n  \"tipoConsulta\": \"Rotina\",\n  \"observacoes\": \"Primeira consulta\"\n}"
+      },
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ jwt_token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_consultas_list",
+      "_type": "request",
+      "parentId": "fld_consultas",
+      "name": "GET /api/Consultas",
+      "method": "GET",
+      "url": "{{ base_url }}/api/Consultas",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ jwt_token }}" }
+      ]
+    },
+    {
+      "_id": "req_consultas_get",
+      "_type": "request",
+      "parentId": "fld_consultas",
+      "name": "GET /api/Consultas/{id}",
+      "method": "GET",
+      "url": "{{ base_url }}/api/Consultas/1",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ jwt_token }}" }
+      ]
+    },
+    {
+      "_id": "req_consultas_put",
+      "_type": "request",
+      "parentId": "fld_consultas",
+      "name": "PUT /api/Consultas/{id}",
+      "method": "PUT",
+      "url": "{{ base_url }}/api/Consultas/1",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"dataHora\": \"2025-10-22T15:00:00\",\n  \"tipoConsulta\": \"Retorno\",\n  \"statusConsulta\": \"Remarcada\",\n  \"observacoes\": \"Ajuste de horário\"\n}"
+      },
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ jwt_token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_consultas_delete",
+      "_type": "request",
+      "parentId": "fld_consultas",
+      "name": "DELETE /api/Consultas/{id}",
+      "method": "DELETE",
+      "url": "{{ base_url }}/api/Consultas/1",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ jwt_token }}" }
+      ]
+    }
+  ]
+}

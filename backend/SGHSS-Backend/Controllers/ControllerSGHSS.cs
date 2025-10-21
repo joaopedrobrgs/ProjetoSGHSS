@@ -53,7 +53,8 @@ public class ControllerSGHSS : ControllerBase
             message
         };
 
-        return base.BadRequest(obj);
+        // Retorna o código HTTP apropriado (ex.: 401, 403, 404, 409, etc.)
+        return base.StatusCode((int)code, obj);
     }
 
     protected async Task<Usuario> GetUserLoggedAsync()

@@ -5,6 +5,7 @@ using SGHSS_Backend.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using SGHSS_Backend.Data.Seed;
 
 namespace SGHSS_Backend
 {
@@ -26,6 +27,8 @@ namespace SGHSS_Backend
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<JwtTokenGenerator>();
             builder.Services.AddScoped<PacienteService>();
+            builder.Services.AddScoped<ProfissionalService>();
+            builder.Services.AddScoped<ConsultaService>();
 
             // Configura a autenticação JWT
             var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key (Jwt:Key) não configurada. Defina em appsettings.json, user-secrets ou variáveis de ambiente.");
@@ -47,6 +50,23 @@ namespace SGHSS_Backend
 
             builder.Services.AddAuthorization(); // Habilita a autorização
 
+            // CORS básico para consumo por front-ends locais
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowLocalhost", policy =>
+                    policy
+                        .WithOrigins(
+                            "http://localhost:3000",
+                            "http://localhost:5173",
+                            "http://127.0.0.1:5173",
+                            "http://127.0.0.1:3000"
+                        )
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials()
+                );
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -56,7 +76,17 @@ namespace SGHSS_Backend
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.UseCors("AllowLocalhost");
+
             app.MapControllers();
+
+            // Migrate and seed
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<SGHSSDbContext>();
+                db.Database.Migrate();
+                DbSeeder.SeedAdminAsync(db).GetAwaiter().GetResult();
+            }
 
             app.Run();
         }
