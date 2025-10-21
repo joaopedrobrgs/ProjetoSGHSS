@@ -2,6 +2,67 @@
 
 public class Utils
 {
+    public static bool ValidarCpf(string cpf)
+    {
+        // 1. Remove caracteres não numéricos
+        string cpfLimpo = new string(cpf.Where(char.IsDigit).ToArray());
+
+        // 2. Verifica se tem 11 dígitos
+        if (cpfLimpo.Length != 11)
+        {
+            return false;
+        }
+
+        // 3. Verifica se todos os dígitos são iguais
+        if (cpfLimpo.All(c => c == cpfLimpo[0]))
+        {
+            return false;
+        }
+
+        // Arrays para os cálculos
+        int[] multiplicadores1 = { 10, 9, 8, 7, 6, 5, 4, 3, 2 };
+        int[] multiplicadores2 = { 11, 10, 9, 8, 7, 6, 5, 4, 3, 2 };
+
+        string cpfSemDigitos = cpfLimpo.Substring(0, 9);
+        int soma = 0;
+        int resto;
+
+        // 4. Cálculo do primeiro dígito verificador
+        for (int i = 0; i < 9; i++)
+        {
+            soma += int.Parse(cpfSemDigitos[i].ToString()) * multiplicadores1[i];
+        }
+
+        resto = soma % 11;
+        int digitoVerificador1 = (resto < 2) ? 0 : 11 - resto;
+
+        // Verifica o primeiro dígito
+        if (int.Parse(cpfLimpo[9].ToString()) != digitoVerificador1)
+        {
+            return false;
+        }
+
+        // 5. Cálculo do segundo dígito verificador
+        soma = 0;
+        string cpfComPrimeiroDigito = cpfSemDigitos + digitoVerificador1;
+
+        for (int i = 0; i < 10; i++)
+        {
+            soma += int.Parse(cpfComPrimeiroDigito[i].ToString()) * multiplicadores2[i];
+        }
+
+        resto = soma % 11;
+        int digitoVerificador2 = (resto < 2) ? 0 : 11 - resto;
+
+        // Verifica o segundo dígito
+        if (int.Parse(cpfLimpo[10].ToString()) != digitoVerificador2)
+        {
+            return false;
+        }
+
+        // Se passou por todas as verificações, o CPF é válido
+        return true;
+    }
     //public static async Task WriteLog(String message, string? _fileNameLog = null, Exception? ex = null, string? dir = null, CancellationToken cancellationToken = default)
     //{
     //    try
