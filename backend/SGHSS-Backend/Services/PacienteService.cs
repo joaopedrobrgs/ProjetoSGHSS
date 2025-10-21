@@ -1,147 +1,181 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System;
 using Microsoft.EntityFrameworkCore;
 using SGHSS_Backend.Data;
 using SGHSS_Backend.Data.Entities;
 using SGHSS_Backend.DTOs.Pacientes;
-using SGHSS_Backend.DTOs.Auth; // Para usar RegisterRequest no método de criação de paciente
-using SGHSS_Backend.Services; // Para usar AuthService
+using SGHSS_Backend.Models.Exceptions; // Para usar AuthService
 
 namespace SGHSS_Backend.Services;
 
 public class PacienteService
 {
     private readonly SGHSSDbContext _context;
-    private readonly AuthService _authService; // Para criar usuário associado ao paciente
 
-    public PacienteService(SGHSSDbContext context, AuthService authService)
+    public PacienteService(SGHSSDbContext context) // Injete no construtor
     {
         _context = context;
-        _authService = authService;
     }
 
-    public async Task<IEnumerable<PacienteResponse>> GetAllPacientes()
+    public async Task<IEnumerable<PacienteResponse>> GetAllPacientes(SGHSSDbContext? context = null)
     {
-        return await _context.Pacientes
-                             .Include(p => p.Usuario) // Inclui os dados do usuário associado
-                             .Select(p => new PacienteResponse
-                             {
-                                 IdPaciente = p.IdPaciente,
-                                 IdUsuario = p.IdUsuario,
-                                 NomeCompleto = p.NomeCompleto,
-                                 DataNascimento = p.DataNascimento,
-                                 Cpf = p.Cpf,
-                                 Telefone = p.Telefone,
-                                 Endereco = p.Endereco,
-                                 HistoricoClinico = p.HistoricoClinico,
-                                 Rg = p.Rg,
-                                 Sexo = p.Sexo,
-                                 Convenio = p.Convenio,
-                                 EmailUsuario = p.Usuario != null ? p.Usuario.Email : null // Pega o email do usuário se existir
-                             })
-                             .ToListAsync();
-    }
-
-    public async Task<PacienteResponse> GetPacienteById(int id)
-    {
-        var paciente = await _context.Pacientes
-                                     .Include(p => p.Usuario)
-                                     .FirstOrDefaultAsync(p => p.IdPaciente == id);
-
-        if (paciente == null)
+        context ??= _context;
+        try
         {
-            return null;
+            return await context.Pacientes
+                                 .Include(p => p.Usuario) // Inclui os dados do usuário associado
+                                 .Select(p => new PacienteResponse
+                                 {
+                                     IdPaciente = p.IdPaciente,
+                                     IdUsuario = p.IdUsuario,
+                                     NomeCompleto = p.NomeCompleto,
+                                     DataNascimento = p.DataNascimento,
+                                     Cpf = p.Cpf,
+                                     Telefone = p.Telefone,
+                                     Endereco = p.Endereco,
+                                     HistoricoClinico = p.HistoricoClinico,
+                                     Rg = p.Rg,
+                                     Sexo = p.Sexo,
+                                     Convenio = p.Convenio,
+                                     EmailUsuario = p.Usuario.Email // Pega o email do usuário se existir
+                                 })
+                                 .ToListAsync();
         }
-
-        return new PacienteResponse
+        catch
         {
-            IdPaciente = paciente.IdPaciente,
-            IdUsuario = paciente.IdUsuario,
-            NomeCompleto = paciente.NomeCompleto,
-            DataNascimento = paciente.DataNascimento,
-            Cpf = paciente.Cpf,
-            Telefone = paciente.Telefone,
-            Endereco = paciente.Endereco,
-            HistoricoClinico = paciente.HistoricoClinico,
-            Rg = paciente.Rg,
-            Sexo = paciente.Sexo,
-            Convenio = paciente.Convenio,
-            EmailUsuario = paciente.Usuario != null ? paciente.Usuario.Email : null
-        };
+            throw;
+        }
     }
 
-    public async Task<PacienteResponse> UpdatePaciente(int id, PacienteUpdateRequest request)
+    public async Task<PacienteResponse> GetPacienteById(int id, Usuario user, SGHSSDbContext? context = null)
     {
-        var paciente = await _context.Pacientes.FirstOrDefaultAsync(p => p.IdPaciente == id);
-
-        if (paciente == null)
+        context ??= _context;
+        try
         {
-            return null; // Paciente não encontrado
-        }
+            var paciente = await context.Pacientes
+                                         .Include(p => p.Usuario)
+                                         .FirstOrDefaultAsync(p => p.IdPaciente == id)
+                                         ?? throw new CustomException("Paciente não encontrado.", 404); // Erro 404: Not Found (Paciente não encontrado)
 
-        // Atualiza apenas os campos que foram fornecidos na requisição (não nulos/vazios)
-        if (!string.IsNullOrEmpty(request.NomeCompleto)) paciente.NomeCompleto = request.NomeCompleto;
-        if (request.DataNascimento.HasValue) paciente.DataNascimento = request.DataNascimento.Value;
-        if (!string.IsNullOrEmpty(request.Cpf)) paciente.Cpf = request.Cpf;
-        if (!string.IsNullOrEmpty(request.Telefone)) paciente.Telefone = request.Telefone;
-        if (!string.IsNullOrEmpty(request.Endereco)) paciente.Endereco = request.Endereco;
-        if (!string.IsNullOrEmpty(request.HistoricoClinico)) paciente.HistoricoClinico = request.HistoricoClinico;
-        if (!string.IsNullOrEmpty(request.Rg)) paciente.Rg = request.Rg;
-        if (!string.IsNullOrEmpty(request.Sexo)) paciente.Sexo = request.Sexo;
-        if (!string.IsNullOrEmpty(request.Convenio)) paciente.Convenio = request.Convenio;
+            // Lógica de autorização para PACIENTE:
+            // Um paciente só pode ver os próprios dados.
+            // Para ADMIN/PROFISSIONAL_SAUDE, não há restrição de ID.
+            if (user.Perfil == "PACIENTE" && paciente.IdUsuario != user.IdUsuario)
+                throw new CustomException("Usuário sem permissão para realizar essa ação.", 403); // Erro 403: Forbidden (paciente tentando acessar dados de outro)
 
-        _context.Pacientes.Update(paciente);
-        await _context.SaveChangesAsync();
-
-        // Retorna o paciente atualizado, buscando o email do usuário se houver
-        var updatedPaciente = await _context.Pacientes
-                                            .Include(p => p.Usuario)
-                                            .FirstOrDefaultAsync(p => p.IdPaciente == id);
-
-        return new PacienteResponse
-        {
-            IdPaciente = updatedPaciente.IdPaciente,
-            IdUsuario = updatedPaciente.IdUsuario,
-            NomeCompleto = updatedPaciente.NomeCompleto,
-            DataNascimento = updatedPaciente.DataNascimento,
-            Cpf = updatedPaciente.Cpf,
-            Telefone = updatedPaciente.Telefone,
-            Endereco = updatedPaciente.Endereco,
-            HistoricoClinico = updatedPaciente.HistoricoClinico,
-            Rg = updatedPaciente.Rg,
-            Sexo = updatedPaciente.Sexo,
-            Convenio = updatedPaciente.Convenio,
-            EmailUsuario = updatedPaciente.Usuario != null ? updatedPaciente.Usuario.Email : null
-        };
-    }
-
-    public async Task<bool> DeletePaciente(int id)
-    {
-        var paciente = await _context.Pacientes.FirstOrDefaultAsync(p => p.IdPaciente == id);
-
-        if (paciente == null)
-        {
-            return false; // Paciente não encontrado
-        }
-
-        // Opcional: Se o paciente tiver um IdUsuario, você pode querer desativar/deletar o usuário também.
-        // Para este projeto, vamos apenas deletar o paciente.
-        // Se o relacionamento for Cascade Delete (no OnModelCreating), a exclusão do usuário
-        // resultaria na exclusão do paciente. Aqui, focamos na exclusão do paciente.
-        if (paciente.IdUsuario > 0)
-        {
-            var usuarioAssociado = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == paciente.IdUsuario);
-            if (usuarioAssociado != null)
+            return new PacienteResponse
             {
-                usuarioAssociado.Ativo = false; // Desativa o usuário em vez de deletar
-                _context.Usuarios.Update(usuarioAssociado);
-            }
+                IdPaciente = paciente.IdPaciente,
+                IdUsuario = paciente.IdUsuario,
+                NomeCompleto = paciente.NomeCompleto,
+                DataNascimento = paciente.DataNascimento,
+                Cpf = paciente.Cpf,
+                Telefone = paciente.Telefone,
+                Endereco = paciente.Endereco,
+                HistoricoClinico = paciente.HistoricoClinico,
+                Rg = paciente.Rg,
+                Sexo = paciente.Sexo,
+                Convenio = paciente.Convenio,
+                EmailUsuario = paciente.Usuario.Email
+            };
         }
+        catch
+        {
+            throw;
+        }
+    }
 
+    public async Task<PacienteResponse> UpdatePaciente(int id, PacienteUpdateRequest request, Usuario user, SGHSSDbContext? context = null)
+    {
+        context ??= _context;
+        try
+        {
+            var paciente = await context.Pacientes.FirstOrDefaultAsync(p => p.IdPaciente == id) ?? throw new CustomException("Paciente não encontrado.", 404);  // Erro 404: Not Found (Paciente não encontrado)
 
-        _context.Pacientes.Remove(paciente);
-        await _context.SaveChangesAsync();
-        return true; // Paciente deletado com sucesso
+            if (user.Perfil == "PACIENTE" && paciente.IdUsuario != user.IdUsuario)
+                throw new CustomException("Usuário sem permissão para realizar essa ação.", 403); // Erro 403: Forbidden (paciente tentando alterar dados de outro)
+
+            // Atualiza apenas os campos que foram fornecidos na requisição (não nulos/vazios)
+            if (!string.IsNullOrEmpty(request.NomeCompleto)) paciente.NomeCompleto = request.NomeCompleto;
+            if (request.DataNascimento.HasValue) paciente.DataNascimento = request.DataNascimento.Value;
+            if (!string.IsNullOrEmpty(request.Cpf)) paciente.Cpf = request.Cpf;
+            if (!string.IsNullOrEmpty(request.Telefone)) paciente.Telefone = request.Telefone;
+            if (!string.IsNullOrEmpty(request.Endereco)) paciente.Endereco = request.Endereco;
+            if (!string.IsNullOrEmpty(request.Rg)) paciente.Rg = request.Rg;
+            if (!string.IsNullOrEmpty(request.Sexo)) paciente.Sexo = request.Sexo;
+            if (!string.IsNullOrEmpty(request.HistoricoClinico))
+            {
+                if (user.Perfil == "PACIENTE")
+                {
+                    throw new CustomException("Paciente não tem permissão para alterar o próprio histórico clínico.", 403);
+                }
+                else
+                {
+                    paciente.HistoricoClinico = request.HistoricoClinico;
+                }
+            }
+            if (!string.IsNullOrEmpty(request.Convenio))
+            {
+                if (user.Perfil == "PACIENTE")
+                {
+                    throw new CustomException("Paciente não tem permissão para alterar a informação sobre o convênio médico.", 403);
+                }
+                else
+                {
+                    paciente.Convenio = request.Convenio;
+                }
+            }
+
+            context.Pacientes.Update(paciente);
+            await context.SaveChangesAsync();
+
+            // Retorna o paciente atualizado, buscando o email do usuário se houver
+            var updatedPaciente = await context.Pacientes
+                                                .Include(p => p.Usuario)
+                                                .FirstOrDefaultAsync(p => p.IdPaciente == id)
+                                                ?? throw new CustomException(null, 404);  // Erro 404: Not Found (Paciente não encontrado)
+
+            return new PacienteResponse
+            {
+                IdPaciente = updatedPaciente.IdPaciente,
+                IdUsuario = updatedPaciente.IdUsuario,
+                NomeCompleto = updatedPaciente.NomeCompleto,
+                DataNascimento = updatedPaciente.DataNascimento,
+                Cpf = updatedPaciente.Cpf,
+                Telefone = updatedPaciente.Telefone,
+                Endereco = updatedPaciente.Endereco,
+                HistoricoClinico = updatedPaciente.HistoricoClinico,
+                Rg = updatedPaciente.Rg,
+                Sexo = updatedPaciente.Sexo,
+                Convenio = updatedPaciente.Convenio,
+                EmailUsuario = updatedPaciente.Usuario.Email
+            };
+        }
+        catch
+        {
+            throw;
+        }
+    }
+
+    public async Task<bool> DeletePaciente(int id, SGHSSDbContext? context = null)
+    {
+        context ??= _context;
+        try
+        {
+            var paciente = await context.Pacientes.FirstOrDefaultAsync(p => p.IdPaciente == id) ?? throw new CustomException(null, 404);  // Erro 404: Not Found (Paciente não encontrado)
+
+            //Deleta usuário do Paciente e, por consequência, o próprio paciente:
+
+            var usuarioAssociado = await context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == paciente.IdUsuario) ?? throw new CustomException(null, 404);  // Erro 404: Not Found (Paciente não encontrado)
+
+            context.Usuarios.Remove(usuarioAssociado);
+
+            await context.SaveChangesAsync();
+
+            return true;
+        }
+        catch
+        {
+            throw;
+        }
     }
 }

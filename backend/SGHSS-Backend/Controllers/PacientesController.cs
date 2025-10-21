@@ -4,7 +4,9 @@ using SGHSS_Backend.DTOs.Pacientes;
 using SGHSS_Backend.Services;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization; // Adicione este using
+using Microsoft.AspNetCore.Authorization;
+using SGHSS_Backend.Models.Exceptions;
+using SGHSS_Backend.Data; // Adicione este using
 
 namespace SGHSS_Backend.Controllers
 {
@@ -15,23 +17,30 @@ namespace SGHSS_Backend.Controllers
     {
         private readonly PacienteService _pacienteService;
 
-        public PacientesController(PacienteService pacienteService)
+        public PacientesController(SGHSSDbContext context, PacienteService pacienteService): base(context)
         {
             _pacienteService = pacienteService;
         }
 
         /// <summary>
         /// Lista todos os pacientes cadastrados.
-        /// Requer autenticação e perfil 'ADMIN' ou 'PROFISSIONAL_SAUDE'.
+        /// Requer autenticação e perfil 'ADMIN' ou 'PROFISSIONAL'.
         /// Endpoint: GET /api/Pacientes
         /// </summary>
         /// <returns>Uma lista de pacientes.</returns>
         [HttpGet]
-        [Authorize(Roles = "ADMIN,PROFISSIONAL_SAUDE")] // Apenas ADMIN ou PROFISSIONAL_SAUDE podem listar
+        [Authorize(Roles = "ADMIN,PROFISSIONAL")] // Apenas ADMIN ou PROFISSIONAL podem listar
         public async Task<ActionResult<IEnumerable<PacienteResponse>>> GetPacientes()
         {
-            var pacientes = await _pacienteService.GetAllPacientes();
-            return Ok(pacientes);
+            try
+            {
+                var pacientes = await _pacienteService.GetAllPacientes();
+                return Ok(pacientes);
+            }
+            catch (Exception ex)
+            {
+                return await CustomErrorRequestAsync(ex);
+            }
         }
 
         /// <summary>
@@ -42,37 +51,19 @@ namespace SGHSS_Backend.Controllers
         /// <param name="id">ID do paciente.</param>
         /// <returns>Os dados do paciente.</returns>
         [HttpGet("{id}")]
-        [Authorize(Roles = "ADMIN,PROFISSIONAL_SAUDE,PACIENTE")] // ADMIN/PROFISSIONAL_SAUDE ou o próprio paciente
+        [Authorize(Roles = "ADMIN,PROFISSIONAL,PACIENTE")] // ADMIN/PROFISSIONAL ou o próprio paciente
         public async Task<IActionResult> GetPacienteById(int id)
         {
-            // Lógica de autorização para PACIENTE:
-            // Um paciente só pode ver os próprios dados.
-            // Para ADMIN/PROFISSIONAL_SAUDE, não há restrição de ID.
-            if (User.IsInRole("PACIENTE"))
+            try
             {
-                var usuarioIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-                if (int.TryParse(usuarioIdClaim, out int loggedInUserId))
-                {
-                    var pacienteDoUsuario = await _pacienteService.GetPacienteById(id);
-                    if (pacienteDoUsuario == null || pacienteDoUsuario.IdUsuario != loggedInUserId)
-                    {
-                        return Forbid(); // Retorna 403 Forbidden se o paciente tentar acessar dados de outro
-                    }
-                }
-                else
-                {
-                    return Unauthorized(new { message = "Usuário paciente não autenticado corretamente." });
-                }
+                var user = await GetUserLoggedAsync() ?? throw new CustomException("Usuário não autenticado.", 401);
+                var paciente = await _pacienteService.GetPacienteById(id, user) ?? throw new CustomException("Paciente não encontrado.", 404); // Exceção 404: Not Found
+                return Ok(paciente);
             }
-
-            var paciente = await _pacienteService.GetPacienteById(id);
-
-            if (paciente == null)
+            catch (Exception ex)
             {
-                return NotFound(); // Retorna 404 Not Found
+                return await CustomErrorRequestAsync(ex);
             }
-
-            return Ok(paciente);
         }
 
         /// <summary>
@@ -84,22 +75,26 @@ namespace SGHSS_Backend.Controllers
         /// <param name="request">Novos dados do paciente.</param>
         /// <returns>O paciente atualizado.</returns>
         [HttpPut("{id}")]
-        [Authorize(Roles = "ADMIN,PROFISSIONAL_SAUDE")] // Apenas ADMIN ou PROFISSIONAL_SAUDE podem atualizar
+        [Authorize(Roles = "ADMIN,PROFISSIONAL,PACIENTE")] // Apenas ADMIN ou PROFISSIONAL podem atualizar (Paciente vai atualizar apenas dados pessoais pela API de Usuário)
         public async Task<IActionResult> PutPaciente(int id, [FromBody] PacienteUpdateRequest request)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                if (!ModelState.IsValid)
+                    throw new Exception("Parâmetros incorretos.");
+
+                var user = await GetUserLoggedAsync() ?? throw new CustomException("Usuário não autenticado.", 401);
+
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+                var updatedPaciente = await _pacienteService.UpdatePaciente(id, request, user) ?? throw new CustomException(null, 404); // Erro 404: Not Found (Paciente não encontrado)
+                await transaction.CommitAsync();
+
+                return Ok(updatedPaciente);
             }
-
-            var updatedPaciente = await _pacienteService.UpdatePaciente(id, request);
-
-            if (updatedPaciente == null)
+            catch (Exception ex)
             {
-                return NotFound(); // Paciente não encontrado
+                return await CustomErrorRequestAsync(ex);
             }
-
-            return Ok(updatedPaciente);
         }
 
         /// <summary>
@@ -113,14 +108,17 @@ namespace SGHSS_Backend.Controllers
         [Authorize(Roles = "ADMIN")] // Apenas ADMIN pode deletar
         public async Task<IActionResult> DeletePaciente(int id)
         {
-            var isDeleted = await _pacienteService.DeletePaciente(id);
-
-            if (!isDeleted)
+            try
             {
-                return NotFound(); // Paciente não encontrado ou falha na exclusão
+                var isDeleted = await _pacienteService.DeletePaciente(id);
+                if (!isDeleted)
+                    throw new CustomException(null, 404); // Erro 404: Not Found (Paciente não encontrado ou falha na exclusão)
+                return NoContent(); // Retorna 204 No Content para indicar sucesso sem corpo de resposta
             }
-
-            return NoContent(); // Retorna 204 No Content para indicar sucesso sem corpo de resposta
+            catch (Exception ex)
+            {
+                return await CustomErrorRequestAsync(ex);
+            }
         }
     }
 }
