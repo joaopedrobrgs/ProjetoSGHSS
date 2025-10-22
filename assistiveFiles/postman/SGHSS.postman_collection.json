@@ -1,0 +1,225 @@
+{
+  "info": {
+    "name": "SGHSS Runner",
+    "_postman_id": "8d7d0a86-9f61-4ef3-ae26-7a5a1e0f7b91",
+    "description": "Coleção com Runner para executar o fluxo completo: login ADMIN → registrar Paciente e Profissional → obter IDs → ativar relação (ADMIN) → atualizar Paciente (PROFISSIONAL) → criar Consulta (PROFISSIONAL).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1) Login ADMIN",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"senha\": \"{{admin_senha}}\"\n}"
+        }
+      },
+      "event": [
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "const data = pm.response.json();",
+          "pm.environment.set('token_admin', data.token);",
+          "pm.environment.set('token', data.token);"
+        ], "type": "text/javascript" } }
+      ]
+    },
+    {
+      "name": "2) Registrar Paciente",
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "// Gera email único se não definido",
+          "if (!pm.environment.get('paciente_email')) {",
+          "  const ts = Date.now();",
+          "  pm.environment.set('paciente_email', `paciente_${ts}@sghss.local`);",
+          "}",
+          "// Gerador de CPF válido",
+          "function geraCPF(){",
+          "  function r(n){return Math.floor(Math.random()*n);} ",
+          "  const n=[]; for(let i=0;i<9;i++) n.push(r(10));",
+          "  let d1=0; for(let i=0;i<9;i++) d1+=n[i]*(10-i); d1=11-(d1%11); d1=d1>9?0:d1;",
+          "  let d2=0; for(let i=0;i<9;i++) d2+=n[i]*(11-i); d2+=d1*2; d2=11-(d2%11); d2=d2>9?0:d2;",
+          "  return `${n.join('')}${d1}${d2}`;",
+          "}",
+          "pm.environment.set('paciente_cpf', geraCPF());",
+          "// RG aleatório",
+          "pm.environment.set('paciente_rg', String(Math.floor(10000000 + Math.random()*89999999)));"
+        ], "type": "text/javascript" } },
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 201', () => pm.response.to.have.status(201));"
+        ], "type": "text/javascript" } }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{paciente_email}}\",\n  \"senha\": \"{{default_password}}\",\n  \"perfil\": \"PACIENTE\",\n  \"pacienteData\": {\n    \"nomeCompleto\": \"Paciente Teste\",\n    \"dataNascimento\": \"1990-05-20\",\n    \"cpf\": \"{{paciente_cpf}}\",\n    \"telefone\": \"(11) 90000-0001\",\n    \"endereco\": \"Rua A, 123\",\n    \"historicoClinico\": \"N/A\",\n    \"rg\": \"{{paciente_rg}}\",\n    \"sexo\": \"Masculino\",\n    \"convenio\": \"Particular\",\n    \"emailPaciente\": \"paciente.teste@sghss.local\"\n  }\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "3) Registrar Profissional",
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "if (!pm.environment.get('profissional_email')) {",
+          "  const ts = Date.now();",
+          "  pm.environment.set('profissional_email', `prof_${ts}@sghss.local`);",
+          "}",
+          "function geraCPF(){",
+          "  function r(n){return Math.floor(Math.random()*n);} ",
+          "  const n=[]; for(let i=0;i<9;i++) n.push(r(10));",
+          "  let d1=0; for(let i=0;i<9;i++) d1+=n[i]*(10-i); d1=11-(d1%11); d1=d1>9?0:d1;",
+          "  let d2=0; for(let i=0;i<9;i++) d2+=n[i]*(11-i); d2+=d1*2; d2=11-(d2%11); d2=d2>9?0:d2;",
+          "  return `${n.join('')}${d1}${d2}`;",
+          "}",
+          "pm.environment.set('prof_cpf', geraCPF());",
+          "pm.environment.set('prof_rg', String(Math.floor(10000000 + Math.random()*89999999)));",
+          "pm.environment.set('prof_crm', `CRM${Math.floor(100000 + Math.random()*899999)}`);"
+        ], "type": "text/javascript" } },
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 201', () => pm.response.to.have.status(201));"
+        ], "type": "text/javascript" } }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{profissional_email}}\",\n  \"senha\": \"{{default_password}}\",\n  \"perfil\": \"PROFISSIONAL\",\n  \"profissionalData\": {\n    \"nomeCompleto\": \"Dra. Pro Teste\",\n    \"cpf\": \"{{prof_cpf}}\",\n    \"rg\": \"{{prof_rg}}\",\n    \"crmOuConselho\": \"{{prof_crm}}\",\n    \"especialidade\": \"Clínico Geral\",\n    \"telefone\": \"(11) 90000-0002\",\n    \"emailProfissional\": \"pro.teste@sghss.local\",\n    \"disponibilidadeAgenda\": \"Seg-Sex 9-18h\"\n  }\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "4) (ADMIN) Listar Pacientes e capturar ID",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/Pacientes", "host": ["{{baseUrl}}"], "path": ["api","Pacientes"] }
+      },
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "// Garante token ADMIN",
+          "pm.environment.set('token', pm.environment.get('token_admin'));"
+        ], "type": "text/javascript" } },
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "const arr = pm.response.json();",
+          "const email = pm.environment.get('paciente_email');",
+          "const found = arr.find(x => x.emailUsuario && x.emailUsuario.toLowerCase() === String(email).toLowerCase());",
+          "pm.expect(found, 'Paciente com email de registro não localizado').to.be.an('object');",
+          "pm.environment.set('idPaciente', found.idPaciente);"
+        ], "type": "text/javascript" } }
+      ],
+      "response": []
+    },
+    {
+      "name": "5) (ADMIN) Listar Profissionais e capturar ID",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/Profissionais", "host": ["{{baseUrl}}"], "path": ["api","Profissionais"] }
+      },
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "pm.environment.set('token', pm.environment.get('token_admin'));"
+        ], "type": "text/javascript" } },
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "const arr = pm.response.json();",
+          "const email = pm.environment.get('profissional_email');",
+          "const found = arr.find(x => x.emailUsuario && x.emailUsuario.toLowerCase() === String(email).toLowerCase());",
+          "pm.expect(found, 'Profissional com email de registro não localizado').to.be.an('object');",
+          "pm.environment.set('idProfissional', found.idProfissional);"
+        ], "type": "text/javascript" } }
+      ],
+      "response": []
+    },
+    {
+      "name": "6) Login PROFISSIONAL",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{profissional_email}}\",\n  \"senha\": \"{{default_password}}\"\n}" }
+      },
+      "event": [
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "const data = pm.response.json();",
+          "pm.environment.set('token_prof', data.token);",
+          "pm.environment.set('token', data.token);"
+        ], "type": "text/javascript" } }
+      ]
+    },
+    {
+      "name": "7) (ADMIN) Ativar Relação Profissional↔Paciente",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/api/Relacoes/ativar", "host": ["{{baseUrl}}"], "path": ["api","Relacoes","ativar"] },
+        "body": { "mode": "raw", "raw": "{\n  \"idProfissional\": {{idProfissional}},\n  \"idPaciente\": {{idPaciente}}\n}" }
+      },
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "pm.environment.set('token', pm.environment.get('token_admin'));"
+        ], "type": "text/javascript" } },
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));"
+        ], "type": "text/javascript" } }
+      ],
+      "response": []
+    },
+    {
+      "name": "8) (PROF) Atualizar Paciente (PUT)",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+        "method": "PUT",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/api/Pacientes/{{idPaciente}}", "host": ["{{baseUrl}}"], "path": ["api","Pacientes", "{{idPaciente}}"] },
+        "body": { "mode": "raw", "raw": "{\n  \"endereco\": \"Rua Alterada, 456\",\n  \"telefone\": \"(11) 90000-9999\"\n}" }
+      },
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "pm.environment.set('token', pm.environment.get('token_prof'));"
+        ], "type": "text/javascript" } },
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));"
+        ], "type": "text/javascript" } }
+      ],
+      "response": []
+    },
+    {
+      "name": "9) (PROF) Criar Consulta",
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "pm.environment.set('token', pm.environment.get('token_prof'));",
+          "// Data futura em 30 minutos",
+          "const future = new Date(Date.now() + 30*60000).toISOString();",
+          "pm.variables.set('consulta_data', future);"
+        ], "type": "text/javascript" } },
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 201', () => pm.response.to.have.status(201));"
+        ], "type": "text/javascript" } }
+      ],
+      "request": {
+        "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/api/Consultas", "host": ["{{baseUrl}}"], "path": ["api","Consultas"] },
+        "body": { "mode": "raw", "raw": "{\n  \"idPaciente\": {{idPaciente}},\n  \"idProfissional\": {{idProfissional}},\n  \"dataHoraConsulta\": \"{{consulta_data}}\",\n  \"tipoConsulta\": \"Retorno\",\n  \"observacoes\": \"Consulta gerada via Runner\"\n}" }
+      },
+      "response": []
+    }
+  ],
+  "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] }
+}
