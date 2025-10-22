@@ -36,7 +36,10 @@ public class ConsultasController : ControllerSGHSS
         try
         {
             if (!ModelState.IsValid)
-                throw new Exception("Parâmetros incorretos.");
+            {
+                var errs = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                throw new CustomException($"Parâmetros incorretos: {errs}", 400);
+            }
 
             var user = await GetUserLoggedAsync();
             var result = await _service.CreateAsync(request, user);
@@ -100,7 +103,10 @@ public class ConsultasController : ControllerSGHSS
         try
         {
             if (!ModelState.IsValid)
-                throw new Exception("Parâmetros incorretos.");
+            {
+                var errs = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                throw new CustomException($"Parâmetros incorretos: {errs}", 400);
+            }
 
             var user = await GetUserLoggedAsync();
             var updated = await _service.UpdateAsync(id, request, user);

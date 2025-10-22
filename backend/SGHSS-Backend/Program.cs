@@ -8,6 +8,7 @@ using System.Text;
 using SGHSS_Backend.Data.Seed;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
+using Microsoft.AspNetCore.Mvc;
 
 namespace SGHSS_Backend
 {
@@ -20,6 +21,12 @@ namespace SGHSS_Backend
             // Add services to the container.
 
             builder.Services.AddControllers();
+
+            // Desabilita o 400 automático do [ApiController] para permitir tratamento manual do ModelState
+            builder.Services.Configure<ApiBehaviorOptions>(options =>
+            {
+                options.SuppressModelStateInvalidFilter = true;
+            });
 
             // Configura o DbContext para usar SQL Server
             builder.Services.AddDbContext<SGHSSDbContext>(options =>
