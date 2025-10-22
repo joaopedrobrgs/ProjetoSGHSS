@@ -1,0 +1,82 @@
+@startuml
+' SGHSS - Modelo de Domínio (simplificado)
+' Visualize com a extensão PlantUML no VS Code ou via PlantUML Server
+
+title SGHSS - Modelo de Domínio
+
+class Usuario {
+  +IdUsuario: int
+  +Email: string
+  +Senha: string
+  +Perfil: string  ' ADMIN | PROFISSIONAL | PACIENTE
+  +Ativo: bool
+  +DataCriacao: DateTime
+}
+
+class Paciente {
+  +IdPaciente: int
+  +IdUsuario: int
+  +NomeCompleto: string
+  +DataNascimento: DateTime
+  +Cpf: string
+  +Telefone: string
+  +Endereco: string
+  +HistoricoClinico: string
+  +Rg: string
+  +Sexo: string
+  +Convenio: string
+  +Email: string?  ' EmailPaciente
+}
+
+class Profissional {
+  +IdProfissional: int
+  +IdUsuario: int
+  +NomeCompleto: string
+  +Cpf: string
+  +Rg: string
+  +CrmOuConselho: string
+  +Especialidade: string
+  +Telefone: string
+  +EmailProfissional: string
+  +DisponibilidadeAgenda: string
+}
+
+class Consulta {
+  +IdConsulta: int
+  +IdPaciente: int
+  +IdProfissional: int
+  +DataHoraConsulta: DateTime
+  +TipoConsulta: string
+  +StatusConsulta: string
+  +Observacoes: string
+}
+
+enum StatusRelacao {
+  Ativa
+  Inativa
+}
+
+class RelacaoProfissionalPaciente {
+  +IdRelacao: int
+  +IdProfissional: int
+  +IdPaciente: int
+  +StatusRelacao: StatusRelacao
+  +DataCriacao: DateTime
+  +DataAtualizacao: DateTime
+}
+
+Usuario "1" -- "0..1" Paciente
+Usuario "1" -- "0..1" Profissional
+Paciente "1" -- "0..*" Consulta : possui >
+Profissional "1" -- "0..*" Consulta : atende >
+Profissional "1" -- "0..*" RelacaoProfissionalPaciente
+Paciente "1" -- "0..*" RelacaoProfissionalPaciente
+
+note right of RelacaoProfissionalPaciente
+  Regra de autorização:
+  PROFISSIONAL só pode atualizar Paciente
+  se existir relação Ativa.
+  Relação é criada/reativada ao criar Consulta.
+end note
+
+@enduml

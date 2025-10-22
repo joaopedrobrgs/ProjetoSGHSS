@@ -39,6 +39,29 @@ O que acontece:
 4) Evidências (prints)
 - Faça prints dos resultados no Runner (cada request mostra o status e resposta), ou abra os requests e use o botão “Send” para ver o body completo.
 
+## Relatório HTML com Newman (opcional, 1 comando)
+
+Gere um relatório bonitão em HTML com o htmlextra.
+
+1) Instalar dependências (primeira vez)
+
+```bash
+cd "assistiveFiles/postman"
+npm install
+```
+
+2) Rodar a coleção e gerar relatório
+
+```bash
+# Certifique-se de que a API está rodando e o baseUrl confere (http/https)
+cd "assistiveFiles/postman"
+npm run test:report
+```
+
+Saída:
+- O relatório será salvo em `assistiveFiles/postman/reports/SGHSS-Runner-Report.html`.
+- Abra o HTML no navegador para anexar no PDF final conforme as diretrizes.
+
 ## Notas importantes
 - O gerador de CPF nos requests de registro cria um CPF válido a cada execução, evitando conflitos.
 - Se quiser repetir o fluxo, basta rodar o Runner novamente (novos e-mails/CPFs serão criados automaticamente).

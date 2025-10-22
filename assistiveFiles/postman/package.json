@@ -1,0 +1,13 @@
+{
+  "name": "sghss-postman",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Runner para coleção Postman do SGHSS com relatório HTML (htmlextra)",
+  "devDependencies": {
+    "newman": "^6.1.2",
+    "newman-reporter-htmlextra": "1.23.1"
+  },
+  "scripts": {
+    "test:report": "newman run SGHSS.postman_collection.json -e SGHSS.postman_environment.json -r htmlextra --reporter-htmlextra-export reports/SGHSS-Runner-Report.html --reporter-htmlextra-title \"SGHSS Runner Report\" --insecure"
+  }
+}

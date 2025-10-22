@@ -7,6 +7,20 @@
   },
   "item": [
     {
+      "name": "0) (Sem token) Listar Pacientes (401)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/Pacientes", "host": ["{{baseUrl}}"], "path": ["api","Pacientes"] }
+      },
+      "event": [
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 401', () => pm.response.to.have.status(401));"
+        ], "type": "text/javascript" } }
+      ],
+      "response": []
+    },
+    {
       "name": "1) Login ADMIN",
       "request": {
         "method": "POST",
@@ -20,9 +34,9 @@
       "event": [
         { "listen": "test", "script": { "exec": [
           "pm.test('Status 200', () => pm.response.to.have.status(200));",
-          "const data = pm.response.json();",
-          "pm.environment.set('token_admin', data.token);",
-          "pm.environment.set('token', data.token);"
+          "let adminResp = pm.response.json();",
+          "pm.environment.set('token_admin', adminResp.token);",
+          "pm.environment.set('token', adminResp.token);"
         ], "type": "text/javascript" } }
       ]
     },
@@ -60,6 +74,24 @@
           "raw": "{\n  \"email\": \"{{paciente_email}}\",\n  \"senha\": \"{{default_password}}\",\n  \"perfil\": \"PACIENTE\",\n  \"pacienteData\": {\n    \"nomeCompleto\": \"Paciente Teste\",\n    \"dataNascimento\": \"1990-05-20\",\n    \"cpf\": \"{{paciente_cpf}}\",\n    \"telefone\": \"(11) 90000-0001\",\n    \"endereco\": \"Rua A, 123\",\n    \"historicoClinico\": \"N/A\",\n    \"rg\": \"{{paciente_rg}}\",\n    \"sexo\": \"Masculino\",\n    \"convenio\": \"Particular\",\n    \"emailPaciente\": \"paciente.teste@sghss.local\"\n  }\n}"
         }
       },
+      "response": []
+    },
+    {
+      "name": "2b) Registrar Paciente com CPF duplicado (409)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"dup_{{paciente_email}}\",\n  \"senha\": \"{{default_password}}\",\n  \"perfil\": \"PACIENTE\",\n  \"pacienteData\": {\n    \"nomeCompleto\": \"Paciente Duplicado\",\n    \"dataNascimento\": \"1990-05-20\",\n    \"cpf\": \"{{paciente_cpf}}\",\n    \"telefone\": \"(11) 91111-1111\",\n    \"endereco\": \"Rua Conflito, 1\",\n    \"historicoClinico\": \"N/A\",\n    \"rg\": \"{{paciente_rg}}\",\n    \"sexo\": \"Masculino\",\n    \"convenio\": \"Particular\",\n    \"emailPaciente\": \"dup.paciente@sghss.local\"\n  }\n}"
+        }
+      },
+      "event": [
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 409', () => pm.response.to.have.status(409));"
+        ], "type": "text/javascript" } }
+      ],
       "response": []
     },
     {
@@ -101,7 +133,7 @@
       "request": {
         "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
         "method": "GET",
-        "header": [],
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
         "url": { "raw": "{{baseUrl}}/api/Pacientes", "host": ["{{baseUrl}}"], "path": ["api","Pacientes"] }
       },
       "event": [
@@ -125,7 +157,7 @@
       "request": {
         "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
         "method": "GET",
-        "header": [],
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
         "url": { "raw": "{{baseUrl}}/api/Profissionais", "host": ["{{baseUrl}}"], "path": ["api","Profissionais"] }
       },
       "event": [
@@ -154,18 +186,37 @@
       "event": [
         { "listen": "test", "script": { "exec": [
           "pm.test('Status 200', () => pm.response.to.have.status(200));",
-          "const data = pm.response.json();",
-          "pm.environment.set('token_prof', data.token);",
-          "pm.environment.set('token', data.token);"
+          "let profResp = pm.response.json();",
+          "pm.environment.set('token_prof', profResp.token);",
+          "pm.environment.set('token', profResp.token);"
         ], "type": "text/javascript" } }
       ]
+    },
+    {
+      "name": "6a) (PROF) Atualizar Paciente sem relação (403)",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+        "method": "PUT",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/api/Pacientes/{{idPaciente}}", "host": ["{{baseUrl}}"], "path": ["api","Pacientes", "{{idPaciente}}"] },
+        "body": { "mode": "raw", "raw": "{\n  \"endereco\": \"Tentativa sem relação\"\n}" }
+      },
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "pm.environment.set('token', pm.environment.get('token_prof'));"
+        ], "type": "text/javascript" } },
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 403', () => pm.response.to.have.status(403));"
+        ], "type": "text/javascript" } }
+      ],
+      "response": []
     },
     {
       "name": "7) (ADMIN) Ativar Relação Profissional↔Paciente",
       "request": {
         "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
         "method": "POST",
-        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" } ],
         "url": { "raw": "{{baseUrl}}/api/Relacoes/ativar", "host": ["{{baseUrl}}"], "path": ["api","Relacoes","ativar"] },
         "body": { "mode": "raw", "raw": "{\n  \"idProfissional\": {{idProfissional}},\n  \"idPaciente\": {{idPaciente}}\n}" }
       },
@@ -184,7 +235,7 @@
       "request": {
         "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
         "method": "PUT",
-        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" } ],
         "url": { "raw": "{{baseUrl}}/api/Pacientes/{{idPaciente}}", "host": ["{{baseUrl}}"], "path": ["api","Pacientes", "{{idPaciente}}"] },
         "body": { "mode": "raw", "raw": "{\n  \"endereco\": \"Rua Alterada, 456\",\n  \"telefone\": \"(11) 90000-9999\"\n}" }
       },
@@ -208,16 +259,130 @@
           "pm.variables.set('consulta_data', future);"
         ], "type": "text/javascript" } },
         { "listen": "test", "script": { "exec": [
-          "pm.test('Status 201', () => pm.response.to.have.status(201));"
+          "pm.test('Status 201', () => pm.response.to.have.status(201));",
+          "let consultaResp = pm.response.json();",
+          "if (consultaResp && consultaResp.idConsulta) pm.environment.set('consulta_id', consultaResp.idConsulta);"
         ], "type": "text/javascript" } }
       ],
       "request": {
         "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
         "method": "POST",
-        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" } ],
         "url": { "raw": "{{baseUrl}}/api/Consultas", "host": ["{{baseUrl}}"], "path": ["api","Consultas"] },
         "body": { "mode": "raw", "raw": "{\n  \"idPaciente\": {{idPaciente}},\n  \"idProfissional\": {{idProfissional}},\n  \"dataHoraConsulta\": \"{{consulta_data}}\",\n  \"tipoConsulta\": \"Retorno\",\n  \"observacoes\": \"Consulta gerada via Runner\"\n}" }
       },
+      "response": []
+    }
+    ,
+    {
+      "name": "10) (PROF) Listar Consultas",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{baseUrl}}/api/Consultas", "host": ["{{baseUrl}}"], "path": ["api","Consultas"] }
+      },
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "pm.environment.set('token', pm.environment.get('token_prof'));"
+        ], "type": "text/javascript" } },
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));"
+        ], "type": "text/javascript" } }
+      ],
+      "response": []
+    },
+    {
+      "name": "11) (PROF) Detalhar Consulta por ID",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{baseUrl}}/api/Consultas/{{consulta_id}}", "host": ["{{baseUrl}}"], "path": ["api","Consultas","{{consulta_id}}"] }
+      },
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "pm.environment.set('token', pm.environment.get('token_prof'));"
+        ], "type": "text/javascript" } },
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));"
+        ], "type": "text/javascript" } }
+      ],
+      "response": []
+    },
+    {
+      "name": "12) (PROF) Atualizar Consulta (Status=Cancelada)",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+        "method": "PUT",
+        "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{baseUrl}}/api/Consultas/{{consulta_id}}", "host": ["{{baseUrl}}"], "path": ["api","Consultas","{{consulta_id}}"] },
+        "body": { "mode": "raw", "raw": "{\n  \"statusConsulta\": \"Cancelada\"\n}" }
+      },
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "pm.environment.set('token', pm.environment.get('token_prof'));"
+        ], "type": "text/javascript" } },
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));"
+        ], "type": "text/javascript" } }
+      ],
+      "response": []
+    },
+    {
+      "name": "13) (ADMIN) Excluir Consulta",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+        "method": "DELETE",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{baseUrl}}/api/Consultas/{{consulta_id}}", "host": ["{{baseUrl}}"], "path": ["api","Consultas","{{consulta_id}}"] }
+      },
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "pm.environment.set('token', pm.environment.get('token_admin'));"
+        ], "type": "text/javascript" } },
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 204', () => pm.response.to.have.status(204));"
+        ], "type": "text/javascript" } }
+      ],
+      "response": []
+    },
+    {
+      "name": "14) (ADMIN) Inativar Relação",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+        "method": "PUT",
+        "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{baseUrl}}/api/Relacoes/inativar", "host": ["{{baseUrl}}"], "path": ["api","Relacoes","inativar"] },
+        "body": { "mode": "raw", "raw": "{\n  \"idProfissional\": {{idProfissional}},\n  \"idPaciente\": {{idPaciente}}\n}" }
+      },
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "pm.environment.set('token', pm.environment.get('token_admin'));"
+        ], "type": "text/javascript" } },
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));"
+        ], "type": "text/javascript" } }
+      ],
+      "response": []
+    },
+    {
+      "name": "15) (PROF) Atualizar Paciente com relação inativa (403)",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+        "method": "PUT",
+        "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{baseUrl}}/api/Pacientes/{{idPaciente}}", "host": ["{{baseUrl}}"], "path": ["api","Pacientes", "{{idPaciente}}"] },
+        "body": { "mode": "raw", "raw": "{\n  \"telefone\": \"(11) 93333-0000\"\n}" }
+      },
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "pm.environment.set('token', pm.environment.get('token_prof'));"
+        ], "type": "text/javascript" } },
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Status 403', () => pm.response.to.have.status(403));"
+        ], "type": "text/javascript" } }
+      ],
       "response": []
     }
   ],
