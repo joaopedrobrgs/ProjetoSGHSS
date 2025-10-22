@@ -31,6 +31,7 @@
       "_type": "request",
       "parentId": "fld_auth",
       "name": "Login",
+      "description": "Autentica o usuário e retorna um JWT.\n\nBody:\n- email (string, obrigatório)\n- senha (string, obrigatório)\n\nRespostas:\n- 200 OK: { token, idUsuario, email, perfil }\n- 400/401: credenciais inválidas.",
       "method": "POST",
       "url": "{{ base_url }}/api/Auth/login",
       "body": {
@@ -46,6 +47,7 @@
       "_type": "request",
       "parentId": "fld_auth",
       "name": "Register - Paciente",
+      "description": "Cria usuário PACIENTE e retorna JWT.\n\nBody:\n- email, senha, perfil=PACIENTE\n- pacienteData: nomeCompleto, dataNascimento, cpf (somente dígitos), rg, sexo, [telefone], [endereco], [historicoClinico], [convenio], [emailPaciente]\n\nRegras:\n- CPF validado e único entre pacientes (409)\n- RG único entre pacientes (409)\n\nRespostas:\n- 200 OK: { token, idUsuario, email, perfil }\n- 400 CPF inválido | 409 duplicidade.",
       "method": "POST",
       "url": "{{ base_url }}/api/Auth/register",
       "body": {
@@ -61,6 +63,7 @@
       "_type": "request",
       "parentId": "fld_auth",
       "name": "Register - Profissional",
+      "description": "Cria usuário PROFISSIONAL e retorna JWT.\n\nBody:\n- email, senha, perfil=PROFISSIONAL\n- profissionalData: nomeCompleto, cpf, rg, crmOuConselho, especialidade, [telefone], [emailProfissional], [disponibilidadeAgenda]\n\nRegras:\n- CPF validado e único entre profissionais (409)\n- RG único entre profissionais (409)\n- CRM/Conselho único (409)\n\nRespostas:\n- 200 OK: { token, idUsuario, email, perfil }\n- 400 CPF inválido | 409 duplicidade.",
       "method": "POST",
       "url": "{{ base_url }}/api/Auth/register",
       "body": {
@@ -83,6 +86,7 @@
       "_type": "request",
       "parentId": "fld_pacientes",
       "name": "GET /api/Pacientes",
+      "description": "Lista pacientes.\n\nAuth: ADMIN ou PROFISSIONAL.\nRespostas:\n- 200 OK: array de pacientes com EmailUsuario e EmailPaciente.",
       "method": "GET",
       "url": "{{ base_url }}/api/Pacientes",
       "headers": [
@@ -94,6 +98,7 @@
       "_type": "request",
       "parentId": "fld_pacientes",
       "name": "GET /api/Pacientes/{id}",
+      "description": "Detalha um paciente.\n\nAuth: ADMIN/PROFISSIONAL ou o próprio PACIENTE (se o IdUsuario corresponder).\nRespostas: 200 OK; 403/404 conforme regras.",
       "method": "GET",
       "url": "{{ base_url }}/api/Pacientes/1",
       "headers": [
@@ -105,6 +110,7 @@
       "_type": "request",
       "parentId": "fld_pacientes",
       "name": "PUT /api/Pacientes/{id}",
+  "description": "Atualiza dados do paciente.\n\nAuth: ADMIN pode atualizar qualquer; PROFISSIONAL pode atualizar apenas pacientes com RELAÇÃO ATIVA (tabela RelacoesProfissionalPaciente); PACIENTE atualiza os próprios dados (com restrições).\nObservação: a relação é criada/reativada automaticamente ao criar uma consulta entre o par.\nCampos aceitos: nomeCompleto, dataNascimento, cpf, telefone, endereco, historicoClinico (restrito), rg, sexo, convenio (restrito), emailPaciente.\nRegras: CPF válido e único entre pacientes (409); RG único entre pacientes (409).\nRespostas: 200 OK; 403/409/400/404 conforme regras.",
       "method": "PUT",
       "url": "{{ base_url }}/api/Pacientes/1",
       "body": {
@@ -121,6 +127,7 @@
       "_type": "request",
       "parentId": "fld_pacientes",
       "name": "DELETE /api/Pacientes/{id}",
+      "description": "Exclui paciente (cascade via usuário).\n\nAuth: ADMIN.\nRespostas: 204 No Content; 404 se não encontrado.",
       "method": "DELETE",
       "url": "{{ base_url }}/api/Pacientes/1",
       "headers": [
@@ -139,6 +146,7 @@
       "_type": "request",
       "parentId": "fld_profissionais",
       "name": "GET /api/Profissionais",
+      "description": "Lista profissionais.\n\nAuth: qualquer perfil autenticado.\nRespostas: 200 OK.",
       "method": "GET",
       "url": "{{ base_url }}/api/Profissionais",
       "headers": [
@@ -150,6 +158,7 @@
       "_type": "request",
       "parentId": "fld_profissionais",
       "name": "GET /api/Profissionais/{id}",
+      "description": "Detalha um profissional.\n\nAuth: qualquer perfil autenticado.\nRespostas: 200 OK; 404 se não encontrado.",
       "method": "GET",
       "url": "{{ base_url }}/api/Profissionais/1",
       "headers": [
@@ -161,6 +170,7 @@
       "_type": "request",
       "parentId": "fld_profissionais",
       "name": "PUT /api/Profissionais/{id}",
+      "description": "Atualiza dados do profissional.\n\nAuth: ADMIN pode atualizar qualquer; PROFISSIONAL apenas o próprio.\nCampos aceitos: nomeCompleto, cpf, rg, crmOuConselho, especialidade, telefone, emailProfissional, disponibilidadeAgenda.\nRegras: CPF válido e único entre profissionais (409); RG único; CRM/Conselho único.\nRespostas: 200 OK; 403/409/400/404 conforme regras.",
       "method": "PUT",
       "url": "{{ base_url }}/api/Profissionais/1",
       "body": {
@@ -177,6 +187,7 @@
       "_type": "request",
       "parentId": "fld_profissionais",
       "name": "DELETE /api/Profissionais/{id}",
+      "description": "Exclui profissional.\n\nAuth: ADMIN e apenas se não houver consultas vinculadas.\nRespostas: 204 No Content; 409 se houver consultas; 404 se não encontrado.",
       "method": "DELETE",
       "url": "{{ base_url }}/api/Profissionais/1",
       "headers": [
@@ -195,6 +206,7 @@
       "_type": "request",
       "parentId": "fld_consultas",
       "name": "POST /api/Consultas",
+      "description": "Cria uma consulta.\n\nBody: pacienteId, profissionalId, dataHora (ISO), tipoConsulta, [observacoes].\nRegras de permissão: PACIENTE agenda para si; PROFISSIONAL na própria agenda; ADMIN para qualquer.\nRespostas: 200 OK com consulta criada; 400/403/409 conforme regras.",
       "method": "POST",
       "url": "{{ base_url }}/api/Consultas",
       "body": {
@@ -211,6 +223,7 @@
       "_type": "request",
       "parentId": "fld_consultas",
       "name": "GET /api/Consultas",
+      "description": "Lista consultas.\n\nAuth: qualquer perfil autenticado.\nRespostas: 200 OK, com escopo conforme perfil (ADMIN: todas; PROFISSIONAL: suas; PACIENTE: suas).",
       "method": "GET",
       "url": "{{ base_url }}/api/Consultas",
       "headers": [
@@ -222,6 +235,7 @@
       "_type": "request",
       "parentId": "fld_consultas",
       "name": "GET /api/Consultas/{id}",
+      "description": "Detalha uma consulta.\n\nAuth: qualquer perfil autenticado com acesso àquela consulta.\nRespostas: 200 OK; 404 se não encontrada.",
       "method": "GET",
       "url": "{{ base_url }}/api/Consultas/1",
       "headers": [
@@ -233,6 +247,7 @@
       "_type": "request",
       "parentId": "fld_consultas",
       "name": "PUT /api/Consultas/{id}",
+      "description": "Atualiza uma consulta.\n\nCampos: dataHora, tipoConsulta, statusConsulta, observacoes.\nRegras: evita conflitos de horário; PACIENTE apenas cancela a própria.\nRespostas: 200 OK; 400/403/409/404 conforme regras.",
       "method": "PUT",
       "url": "{{ base_url }}/api/Consultas/1",
       "body": {
@@ -249,6 +264,7 @@
       "_type": "request",
       "parentId": "fld_consultas",
       "name": "DELETE /api/Consultas/{id}",
+      "description": "Exclui uma consulta.\n\nAuth: conforme regras do sistema (geralmente ADMIN/PROFISSIONAL).\nRespostas: 204 No Content; 404 se não encontrada.",
       "method": "DELETE",
       "url": "{{ base_url }}/api/Consultas/1",
       "headers": [
@@ -282,6 +298,47 @@
         "text": "{\n  \"email\": \"pro2@sghss.local\",\n  \"senha\": \"Pro@123\",\n  \"perfil\": \"PROFISSIONAL\",\n  \"profissionalData\": {\n    \"nomeCompleto\": \"Dr. Bruno\",\n    \"cpf\": \"98765432100\",\n    \"rg\": \"SP1234567\",\n    \"crmOuConselho\": \"CRM-8888\",\n    \"especialidade\": \"Ortopedia\",\n    \"telefone\": \"11955556666\",\n    \"emailProfissional\": \"bruno@clinic.com\",\n    \"disponibilidadeAgenda\": \"Seg-Sex 08-17h\"\n  }\n}"
       },
       "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    }
+    ,
+    {
+      "_id": "fld_relacoes",
+      "_type": "request_group",
+      "parentId": "wrk_sghss",
+      "name": "Relacoes"
+    },
+    {
+      "_id": "req_relacoes_ativar",
+      "_type": "request",
+      "parentId": "fld_relacoes",
+      "name": "POST /api/Relacoes/ativar",
+      "description": "Ativa (ou cria) a relação entre profissional e paciente.\n\nAuth: ADMIN.\nBody: idProfissional, idPaciente.\nRespostas: 200 OK com relação.",
+      "method": "POST",
+      "url": "{{ base_url }}/api/Relacoes/ativar",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"idProfissional\": 1,\n  \"idPaciente\": 1\n}"
+      },
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ jwt_token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_relacoes_inativar",
+      "_type": "request",
+      "parentId": "fld_relacoes",
+      "name": "PUT /api/Relacoes/inativar",
+      "description": "Inativa a relação entre profissional e paciente.\n\nAuth: ADMIN.\nBody: idProfissional, idPaciente.\nRespostas: 200 OK; 404 se não existir relação.",
+      "method": "PUT",
+      "url": "{{ base_url }}/api/Relacoes/inativar",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"idProfissional\": 1,\n  \"idPaciente\": 1\n}"
+      },
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ jwt_token }}" },
         { "name": "Content-Type", "value": "application/json" }
       ]
     }

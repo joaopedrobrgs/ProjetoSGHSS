@@ -86,7 +86,7 @@
       "_type": "request",
       "parentId": "fld_pacientes_light",
       "name": "PUT /api/Pacientes/{id}",
-      "description": "Atualiza dados do paciente.\n\nAuth: PACIENTE pode atualizar parcialmente seus dados (exceto histórico e convênio); ADMIN/PROFISSIONAL podem alterar campos restritos.\nCampos aceitos: nomeCompleto, dataNascimento, cpf, telefone, endereco, historicoClinico (restrito), rg, sexo, convenio (restrito), emailPaciente.\nRegras: CPF válido e único entre pacientes (409); RG único entre pacientes (409).\nRespostas: 200 OK com objeto atualizado; 403/409/400 conforme regras.",
+  "description": "Atualiza dados do paciente.\n\nAuth: PACIENTE pode atualizar parcialmente seus dados (exceto histórico e convênio); PROFISSIONAL só pode atualizar se houver RELAÇÃO ATIVA com o paciente; ADMIN pode alterar campos restritos.\nObservação: a relação é criada/reativada automaticamente ao criar uma consulta entre o par, e também pode ser gerenciada via /api/Relacoes (ADMIN).\nCampos aceitos: nomeCompleto, dataNascimento, cpf, telefone, endereco, historicoClinico (restrito), rg, sexo, convenio (restrito), emailPaciente.\nRegras: CPF válido e único entre pacientes (409); RG único entre pacientes (409).\nRespostas: 200 OK com objeto atualizado; 403/409/400 conforme regras.",
       "method": "PUT",
       "url": "{{ base_url }}/api/Pacientes/1",
       "body": {
@@ -157,6 +157,175 @@
       "method": "GET",
       "url": "{{ base_url }}/api/Consultas",
       "headers": [ { "name": "Authorization", "value": "Bearer {{ jwt_token }}" } ]
+    }
+    ,
+    {
+      "_id": "res_login_200_light",
+      "_type": "response",
+      "parentId": "req_login_light",
+      "statusCode": 200,
+      "statusMessage": "OK",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "{\n  \"token\": \"<jwt>\",\n  \"idUsuario\": 1,\n  \"email\": \"admin@sghss.local\",\n  \"perfil\": \"ADMIN\"\n}"
+    },
+    {
+      "_id": "res_login_401_light",
+      "_type": "response",
+      "parentId": "req_login_light",
+      "statusCode": 401,
+      "statusMessage": "Unauthorized",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "{\n  \"message\": \"Credenciais inválidas\"\n}"
+    },
+
+    {
+      "_id": "res_reg_pac_200_light",
+      "_type": "response",
+      "parentId": "req_register_paciente_light",
+      "statusCode": 200,
+      "statusMessage": "OK",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "{\n  \"token\": \"<jwt>\",\n  \"idUsuario\": 10,\n  \"email\": \"pac1@sghss.local\",\n  \"perfil\": \"PACIENTE\"\n}"
+    },
+    {
+      "_id": "res_reg_pac_400_light",
+      "_type": "response",
+      "parentId": "req_register_paciente_light",
+      "statusCode": 400,
+      "statusMessage": "Bad Request",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "{\n  \"message\": \"Informe um CPF válido.\"\n}"
+    },
+    {
+      "_id": "res_reg_pac_409_light",
+      "_type": "response",
+      "parentId": "req_register_paciente_light",
+      "statusCode": 409,
+      "statusMessage": "Conflict",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "{\n  \"message\": \"Já existe paciente cadastrado com o mesmo CPF.\"\n}"
+    },
+
+    {
+      "_id": "res_reg_prof_200_light",
+      "_type": "response",
+      "parentId": "req_register_profissional_light",
+      "statusCode": 200,
+      "statusMessage": "OK",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "{\n  \"token\": \"<jwt>\",\n  \"idUsuario\": 20,\n  \"email\": \"pro1@sghss.local\",\n  \"perfil\": \"PROFISSIONAL\"\n}"
+    },
+    {
+      "_id": "res_reg_prof_409_light",
+      "_type": "response",
+      "parentId": "req_register_profissional_light",
+      "statusCode": 409,
+      "statusMessage": "Conflict",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "{\n  \"message\": \"Já existe profissional cadastrado com o mesmo CPF.\"\n}"
+    },
+
+    {
+      "_id": "res_pac_list_200_light",
+      "_type": "response",
+      "parentId": "req_pacientes_list_light",
+      "statusCode": 200,
+      "statusMessage": "OK",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "[\n  {\n    \"idPaciente\": 1,\n    \"nomeCompleto\": \"Paciente Light\",\n    \"emailUsuario\": \"pac1@sghss.local\",\n    \"emailPaciente\": \"paciente.light@dominio.com\"\n  }\n]"
+    },
+    {
+      "_id": "res_pac_put_200_light",
+      "_type": "response",
+      "parentId": "req_pacientes_put_light",
+      "statusCode": 200,
+      "statusMessage": "OK",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "{\n  \"idPaciente\": 1,\n  \"emailPaciente\": \"paciente.light@update.com\"\n}"
+    },
+    {
+      "_id": "res_pac_put_403_light",
+      "_type": "response",
+      "parentId": "req_pacientes_put_light",
+      "statusCode": 403,
+      "statusMessage": "Forbidden",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "{\n  \"message\": \"Usuário sem permissão para realizar essa ação.\"\n}"
+    },
+    {
+      "_id": "res_pac_put_409_light",
+      "_type": "response",
+      "parentId": "req_pacientes_put_light",
+      "statusCode": 409,
+      "statusMessage": "Conflict",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "{\n  \"message\": \"Já existe paciente cadastrado com o mesmo CPF.\"\n}"
+    },
+
+    {
+      "_id": "res_prof_list_200_light",
+      "_type": "response",
+      "parentId": "req_profissionais_list_light",
+      "statusCode": 200,
+      "statusMessage": "OK",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "[\n  {\n    \"idProfissional\": 1,\n    \"nomeCompleto\": \"Dr(a). Light\"\n  }\n]"
+    },
+    {
+      "_id": "res_prof_put_200_light",
+      "_type": "response",
+      "parentId": "req_profissionais_put_light",
+      "statusCode": 200,
+      "statusMessage": "OK",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "{\n  \"idProfissional\": 1,\n  \"cpf\": \"98765432100\",\n  \"rg\": \"SP123\"\n}"
+    },
+    {
+      "_id": "res_prof_put_409_light",
+      "_type": "response",
+      "parentId": "req_profissionais_put_light",
+      "statusCode": 409,
+      "statusMessage": "Conflict",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "{\n  \"message\": \"Já existe profissional cadastrado com o mesmo RG.\"\n}"
+    },
+
+    {
+      "_id": "res_cons_create_200_light",
+      "_type": "response",
+      "parentId": "req_consultas_create_light",
+      "statusCode": 200,
+      "statusMessage": "OK",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "{\n  \"idConsulta\": 1,\n  \"pacienteId\": 1,\n  \"profissionalId\": 1,\n  \"dataHoraConsulta\": \"2025-10-22T14:00:00\",\n  \"tipoConsulta\": \"Rotina\",\n  \"statusConsulta\": \"Agendada\"\n}"
+    },
+    {
+      "_id": "res_cons_create_403_light",
+      "_type": "response",
+      "parentId": "req_consultas_create_light",
+      "statusCode": 403,
+      "statusMessage": "Forbidden",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "{\n  \"message\": \"Usuário sem permissão para agendar consulta para outro paciente.\"\n}"
+    },
+    {
+      "_id": "res_cons_create_409_light",
+      "_type": "response",
+      "parentId": "req_consultas_create_light",
+      "statusCode": 409,
+      "statusMessage": "Conflict",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "{\n  \"message\": \"Já existe consulta para esse horário.\"\n}"
+    },
+
+    {
+      "_id": "res_cons_list_200_light",
+      "_type": "response",
+      "parentId": "req_consultas_list_light",
+      "statusCode": 200,
+      "statusMessage": "OK",
+      "headers": [ { "name": "content-type", "value": "application/json" } ],
+      "body": "[\n  { \n    \"idConsulta\": 1, \n    \"tipoConsulta\": \"Rotina\" \n  }\n]"
     }
   ]
 }

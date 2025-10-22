@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SGHSS_Backend.Data;
 
@@ -11,9 +12,11 @@ using SGHSS_Backend.Data;
 namespace SGHSS_Backend.Migrations
 {
     [DbContext(typeof(SGHSSDbContext))]
-    partial class SGHSSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251021235336_AddRelacaoProfissionalPaciente")]
+    partial class AddRelacaoProfissionalPaciente
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

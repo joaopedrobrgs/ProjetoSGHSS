@@ -83,6 +83,20 @@ public class PacienteService
         if (user.Perfil == "PACIENTE" && paciente.IdUsuario != user.IdUsuario)
             throw new CustomException("Usuário sem permissão para realizar essa ação.", 403);
 
+        if (user.Perfil == "PROFISSIONAL")
+        {
+            var profissional = await context.Profissionais.AsNoTracking()
+                .FirstOrDefaultAsync(p => p.IdUsuario == user.IdUsuario)
+                ?? throw new CustomException("Profissional não encontrado para o usuário autenticado.", 403);
+
+            // Checa APENAS relação ativa entre profissional e paciente
+            bool relacaoAtiva = await context.RelacoesProfissionalPaciente.AsNoTracking()
+                .AnyAsync(r => r.IdProfissional == profissional.IdProfissional && r.IdPaciente == paciente.IdPaciente && r.StatusRelacao == "Ativo");
+
+            if (!relacaoAtiva)
+                throw new CustomException("Profissional só pode alterar dados de pacientes com os quais possui relação ativa.", 403);
+        }
+
         // Atualiza apenas os campos que foram fornecidos na requisição (não nulos/vazios)
         if (!string.IsNullOrEmpty(request.NomeCompleto)) paciente.NomeCompleto = request.NomeCompleto;
         if (request.DataNascimento.HasValue) paciente.DataNascimento = request.DataNascimento.Value;

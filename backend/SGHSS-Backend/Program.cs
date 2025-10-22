@@ -29,6 +29,7 @@ namespace SGHSS_Backend
             builder.Services.AddScoped<PacienteService>();
             builder.Services.AddScoped<ProfissionalService>();
             builder.Services.AddScoped<ConsultaService>();
+            builder.Services.AddScoped<RelacaoService>();
 
             // Configura a autenticação JWT
             var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key (Jwt:Key) não configurada. Defina em appsettings.json, user-secrets ou variáveis de ambiente.");

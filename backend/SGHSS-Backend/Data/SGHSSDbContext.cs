@@ -14,6 +14,7 @@ public class SGHSSDbContext : DbContext
     public DbSet<Paciente> Pacientes { get; set; }
     public DbSet<Profissional> Profissionais { get; set; }
     public DbSet<Consulta> Consultas { get; set; }
+    public DbSet<RelacaoProfissionalPaciente> RelacoesProfissionalPaciente { get; set; }
 
     // Método para configurar o mapeamento das entidades para as tabelas do banco de dados
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -36,6 +37,12 @@ public class SGHSSDbContext : DbContext
         modelBuilder.Entity<Consulta>().HasKey(c => c.IdConsulta);
         modelBuilder.Entity<Consulta>().Property(c => c.IdConsulta).ValueGeneratedOnAdd();
         modelBuilder.Entity<Consulta>().ToTable("Consultas");
+
+    // Relacao Profissional-Paciente
+    modelBuilder.Entity<RelacaoProfissionalPaciente>().HasKey(r => r.IdRelacao);
+    modelBuilder.Entity<RelacaoProfissionalPaciente>().Property(r => r.IdRelacao).ValueGeneratedOnAdd();
+    modelBuilder.Entity<RelacaoProfissionalPaciente>().ToTable("RelacoesProfissionalPaciente");
+    modelBuilder.Entity<RelacaoProfissionalPaciente>().Property(r => r.StatusRelacao).HasMaxLength(20);
 
 
         // Configuração dos relacionamentos (Fluent API)
@@ -69,6 +76,20 @@ public class SGHSSDbContext : DbContext
             .HasForeignKey(c => c.IdProfissional)
             .OnDelete(DeleteBehavior.Restrict); // Não deleta o profissional se ele tiver consultas
 
+        // Relacionamento Profissional-Relacao (1:N)
+        modelBuilder.Entity<RelacaoProfissionalPaciente>()
+            .HasOne(r => r.Profissional)
+            .WithMany(p => p.Relacoes)
+            .HasForeignKey(r => r.IdProfissional)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Relacionamento Paciente-Relacao (1:N)
+        modelBuilder.Entity<RelacaoProfissionalPaciente>()
+            .HasOne(r => r.Paciente)
+            .WithMany(p => p.Relacoes)
+            .HasForeignKey(r => r.IdPaciente)
+            .OnDelete(DeleteBehavior.Restrict);
+
 
         // Configurações adicionais para mapeamento de nomes de coluna se forem diferentes das convenções
         // Exemplo: se na tabela Usuarios a coluna fosse 'user_email' e na classe é 'Email'
@@ -81,6 +102,7 @@ public class SGHSSDbContext : DbContext
     modelBuilder.Entity<Profissional>().HasIndex(ps => ps.CrmOuConselho).IsUnique();
     modelBuilder.Entity<Profissional>().HasIndex(ps => ps.Cpf).IsUnique().HasFilter("[Cpf] IS NOT NULL AND [Cpf] <> ''");
     modelBuilder.Entity<Profissional>().HasIndex(ps => ps.Rg).IsUnique().HasFilter("[Rg] IS NOT NULL AND [Rg] <> ''");
+    modelBuilder.Entity<RelacaoProfissionalPaciente>().HasIndex(r => new { r.IdProfissional, r.IdPaciente }).IsUnique();
 
 
         base.OnModelCreating(modelBuilder);

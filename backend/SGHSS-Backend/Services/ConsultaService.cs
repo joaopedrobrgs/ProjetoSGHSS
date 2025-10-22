@@ -58,6 +58,27 @@ public class ConsultaService
         context.Consultas.Add(nova);
         await context.SaveChangesAsync();
 
+        // Garante/ativa relação Profissional-Paciente
+        var rel = await context.RelacoesProfissionalPaciente.FirstOrDefaultAsync(r =>
+            r.IdProfissional == request.IdProfissional && r.IdPaciente == request.IdPaciente);
+        if (rel == null)
+        {
+            rel = new RelacaoProfissionalPaciente
+            {
+                IdProfissional = request.IdProfissional,
+                IdPaciente = request.IdPaciente,
+                StatusRelacao = "Ativo"
+            };
+            context.RelacoesProfissionalPaciente.Add(rel);
+            await context.SaveChangesAsync();
+        }
+        else if (!string.Equals(rel.StatusRelacao, "Ativo", StringComparison.OrdinalIgnoreCase))
+        {
+            rel.StatusRelacao = "Ativo";
+            context.RelacoesProfissionalPaciente.Update(rel);
+            await context.SaveChangesAsync();
+        }
+
         var result = await context.Consultas
             .Include(c => c.Paciente)
             .Include(c => c.Profissional)

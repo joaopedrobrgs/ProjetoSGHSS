@@ -20,4 +20,5 @@ public class Paciente
     // Propriedades de navegação
     public virtual Usuario Usuario { get; set; } // Relacionamento 1:1 ou 1:0 com Usuario
     public virtual ICollection<Consulta> Consultas { get; set; } // Um paciente pode ter muitas consultas
+    public virtual ICollection<RelacaoProfissionalPaciente> Relacoes { get; set; } // Relacoes com profissionais
 }
