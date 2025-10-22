@@ -17,7 +17,11 @@
       "name": "Base Environment",
       "data": {
         "base_url": "https://localhost:7098",
-        "jwt_token": ""
+        "jwt_token": "",
+        "admin_email": "admin@sghss.local",
+        "admin_senha": "Admin@123",
+        "idPaciente": 1,
+        "idProfissional": 1
       }
     },
     {
@@ -36,7 +40,7 @@
       "url": "{{ base_url }}/api/Auth/login",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"email\": \"admin@sghss.local\",\n  \"senha\": \"Admin@123\"\n}"
+        "text": "{\n  \"email\": \"{{ admin_email }}\",\n  \"senha\": \"{{ admin_senha }}\"\n}"
       },
       "headers": [
         { "name": "Content-Type", "value": "application/json" }
@@ -100,7 +104,7 @@
       "name": "GET /api/Pacientes/{id}",
       "description": "Detalha um paciente.\n\nAuth: ADMIN/PROFISSIONAL ou o próprio PACIENTE (se o IdUsuario corresponder).\nRespostas: 200 OK; 403/404 conforme regras.",
       "method": "GET",
-      "url": "{{ base_url }}/api/Pacientes/1",
+  "url": "{{ base_url }}/api/Pacientes/{{ idPaciente }}",
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ jwt_token }}" }
       ]
@@ -112,7 +116,7 @@
       "name": "PUT /api/Pacientes/{id}",
   "description": "Atualiza dados do paciente.\n\nAuth: ADMIN pode atualizar qualquer; PROFISSIONAL pode atualizar apenas pacientes com RELAÇÃO ATIVA (tabela RelacoesProfissionalPaciente); PACIENTE atualiza os próprios dados (com restrições).\nObservação: a relação é criada/reativada automaticamente ao criar uma consulta entre o par.\nCampos aceitos: nomeCompleto, dataNascimento, cpf, telefone, endereco, historicoClinico (restrito), rg, sexo, convenio (restrito), emailPaciente.\nRegras: CPF válido e único entre pacientes (409); RG único entre pacientes (409).\nRespostas: 200 OK; 403/409/400/404 conforme regras.",
       "method": "PUT",
-      "url": "{{ base_url }}/api/Pacientes/1",
+  "url": "{{ base_url }}/api/Pacientes/{{ idPaciente }}",
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"nomeCompleto\": \"Paciente Um Atualizado\",\n  \"dataNascimento\": \"2000-01-01\",\n  \"cpf\": \"12345678900\",\n  \"telefone\": \"11911111112\",\n  \"endereco\": \"Rua A, 101\",\n  \"historicoClinico\": \"N/A\",\n  \"rg\": \"1111111\",\n  \"sexo\": \"M\",\n  \"convenio\": \"Unimed\",\n  \"emailPaciente\": \"paciente1.atualizado@dominio.com\"\n}"
@@ -129,7 +133,7 @@
       "name": "DELETE /api/Pacientes/{id}",
       "description": "Exclui paciente (cascade via usuário).\n\nAuth: ADMIN.\nRespostas: 204 No Content; 404 se não encontrado.",
       "method": "DELETE",
-      "url": "{{ base_url }}/api/Pacientes/1",
+  "url": "{{ base_url }}/api/Pacientes/{{ idPaciente }}",
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ jwt_token }}" }
       ]
@@ -160,7 +164,7 @@
       "name": "GET /api/Profissionais/{id}",
       "description": "Detalha um profissional.\n\nAuth: qualquer perfil autenticado.\nRespostas: 200 OK; 404 se não encontrado.",
       "method": "GET",
-      "url": "{{ base_url }}/api/Profissionais/1",
+  "url": "{{ base_url }}/api/Profissionais/{{ idProfissional }}",
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ jwt_token }}" }
       ]
@@ -172,7 +176,7 @@
       "name": "PUT /api/Profissionais/{id}",
       "description": "Atualiza dados do profissional.\n\nAuth: ADMIN pode atualizar qualquer; PROFISSIONAL apenas o próprio.\nCampos aceitos: nomeCompleto, cpf, rg, crmOuConselho, especialidade, telefone, emailProfissional, disponibilidadeAgenda.\nRegras: CPF válido e único entre profissionais (409); RG único; CRM/Conselho único.\nRespostas: 200 OK; 403/409/400/404 conforme regras.",
       "method": "PUT",
-      "url": "{{ base_url }}/api/Profissionais/1",
+  "url": "{{ base_url }}/api/Profissionais/{{ idProfissional }}",
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"nomeCompleto\": \"Dra. Ana Medeiros\",\n  \"cpf\": \"98765432100\",\n  \"rg\": \"SP1234567\",\n  \"crmOuConselho\": \"CRM-9999\",\n  \"especialidade\": \"Clínico Geral\",\n  \"telefone\": \"11922223333\",\n  \"emailProfissional\": \"ana.m@clinic.com\",\n  \"disponibilidadeAgenda\": \"Seg-Sex 08-17h\"\n}"
@@ -189,7 +193,7 @@
       "name": "DELETE /api/Profissionais/{id}",
       "description": "Exclui profissional.\n\nAuth: ADMIN e apenas se não houver consultas vinculadas.\nRespostas: 204 No Content; 409 se houver consultas; 404 se não encontrado.",
       "method": "DELETE",
-      "url": "{{ base_url }}/api/Profissionais/1",
+  "url": "{{ base_url }}/api/Profissionais/{{ idProfissional }}",
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ jwt_token }}" }
       ]
@@ -206,12 +210,12 @@
       "_type": "request",
       "parentId": "fld_consultas",
       "name": "POST /api/Consultas",
-      "description": "Cria uma consulta.\n\nBody: pacienteId, profissionalId, dataHora (ISO), tipoConsulta, [observacoes].\nRegras de permissão: PACIENTE agenda para si; PROFISSIONAL na própria agenda; ADMIN para qualquer.\nRespostas: 200 OK com consulta criada; 400/403/409 conforme regras.",
+  "description": "Cria uma consulta.\n\nBody: idPaciente, idProfissional, dataHoraConsulta (ISO), tipoConsulta, [observacoes].\nRegras de permissão: PACIENTE agenda para si; PROFISSIONAL na própria agenda; ADMIN para qualquer.\nRespostas: 201 Created com consulta criada; 400/403/409 conforme regras.",
       "method": "POST",
       "url": "{{ base_url }}/api/Consultas",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"pacienteId\": 1,\n  \"profissionalId\": 1,\n  \"dataHora\": \"2025-10-22T14:00:00\",\n  \"tipoConsulta\": \"Rotina\",\n  \"observacoes\": \"Primeira consulta\"\n}"
+        "text": "{\n  \"idPaciente\": {{ idPaciente }},\n  \"idProfissional\": {{ idProfissional }},\n  \"dataHoraConsulta\": \"2025-11-20T14:00:00Z\",\n  \"tipoConsulta\": \"Presencial\",\n  \"observacoes\": \"Consulta de rotina\"\n}"
       },
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ jwt_token }}" },
@@ -237,7 +241,7 @@
       "name": "GET /api/Consultas/{id}",
       "description": "Detalha uma consulta.\n\nAuth: qualquer perfil autenticado com acesso àquela consulta.\nRespostas: 200 OK; 404 se não encontrada.",
       "method": "GET",
-      "url": "{{ base_url }}/api/Consultas/1",
+  "url": "{{ base_url }}/api/Consultas/1",
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ jwt_token }}" }
       ]
@@ -249,10 +253,10 @@
       "name": "PUT /api/Consultas/{id}",
       "description": "Atualiza uma consulta.\n\nCampos: dataHora, tipoConsulta, statusConsulta, observacoes.\nRegras: evita conflitos de horário; PACIENTE apenas cancela a própria.\nRespostas: 200 OK; 400/403/409/404 conforme regras.",
       "method": "PUT",
-      "url": "{{ base_url }}/api/Consultas/1",
+  "url": "{{ base_url }}/api/Consultas/1",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"dataHora\": \"2025-10-22T15:00:00\",\n  \"tipoConsulta\": \"Retorno\",\n  \"statusConsulta\": \"Remarcada\",\n  \"observacoes\": \"Ajuste de horário\"\n}"
+        "text": "{\n  \"dataHoraConsulta\": \"2025-11-20T15:00:00Z\",\n  \"tipoConsulta\": \"Retorno\",\n  \"statusConsulta\": \"Remarcada\",\n  \"observacoes\": \"Ajuste de horário\"\n}"
       },
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ jwt_token }}" },
@@ -318,7 +322,7 @@
       "url": "{{ base_url }}/api/Relacoes/ativar",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"idProfissional\": 1,\n  \"idPaciente\": 1\n}"
+        "text": "{\n  \"idProfissional\": {{ idProfissional }},\n  \"idPaciente\": {{ idPaciente }}\n}"
       },
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ jwt_token }}" },
@@ -335,7 +339,7 @@
       "url": "{{ base_url }}/api/Relacoes/inativar",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"idProfissional\": 1,\n  \"idPaciente\": 1\n}"
+        "text": "{\n  \"idProfissional\": {{ idProfissional }},\n  \"idPaciente\": {{ idPaciente }}\n}"
       },
       "headers": [
         { "name": "Authorization", "value": "Bearer {{ jwt_token }}" },

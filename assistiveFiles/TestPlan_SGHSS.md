@@ -1,47 +1,157 @@
-# Plano de Testes — SGHSS
+# SGHSS - Plano de Testes (Back-end)
 
-Data: 21/10/2025
+Data: 2025-10-21
 Escopo: API Back-end (.NET 8)
-Ferramenta primária: Insomnia (coleção incluída). Ferramentas opcionais: JMeter/Locust (carga), OWASP ZAP (segurança).
+Ferramenta primária: Insomnia (coleção incluída). Opcionais: Postman Runner, JMeter/Locust (carga), OWASP ZAP (segurança).
 
-## 1. Estratégia
-- Funcionais: validar RFs via coleção Insomnia, cobrindo fluxos felizes e erros comuns.
-- Segurança: verificar autenticação JWT, autorização por perfis, e entradas inválidas (sem expor detalhes sensíveis).
-- Desempenho (sugestão): cenários de listagem/consulta e criação de consultas sob carga moderada.
+## Papéis e regra de autorização
+- ADMIN: acesso total a CRUDs e gestão de relações.
+- PROFISSIONAL: acesso a listagens e operações na própria agenda; só pode atualizar dados de paciente se houver RELAÇÃO ATIVA com o paciente.
+- PACIENTE: acesso apenas aos próprios dados e consultas.
 
-## 2. Cenários Funcionais (exemplos)
+Relação Profissional–Paciente:
+- Criada/reativada automaticamente ao criar uma Consulta entre o par.
+- Pode ser ativada/inativada manualmente por ADMIN via /api/Relacoes.
+- É o único critério para PROFISSIONAL alterar dados de um paciente (sem fallback por consultas).
 
-| Caso | Descrição | Passos | Resultado Esperado |
-|------|-----------|--------|--------------------|
-| CT001 | Login ADMIN | POST /api/Auth/login (admin@sghss.local/Admin@123) | 200 OK + token JWT válido |
-| CT002 | Registrar Paciente válido | POST /api/Auth/register (perfil PACIENTE) | 201/200 OK + usuário/paciente criado |
-| CT003 | Registrar Profissional válido | POST /api/Auth/register (perfil PROFISSIONAL) | 201/200 OK + usuário/profissional criado |
-| CT004 | Listar Pacientes (ADMIN) | GET /api/Pacientes com Bearer | 200 OK + lista |
-| CT005 | Obter Paciente por id (self/ADMIN/PROFISSIONAL autorizado) | GET /api/Pacientes/{id} | 200 OK (ou 403/404 conforme regra) |
-| CT006 | Atualizar Paciente (self/ADMIN) | PUT /api/Pacientes/{id} | 200 OK + dados atualizados |
-| CT007 | Deletar Paciente (ADMIN) | DELETE /api/Pacientes/{id} | 204 No Content |
-| CT008 | Listar Profissionais (ADMIN/PROFISSIONAL) | GET /api/Profissionais | 200 OK |
-| CT009 | Atualizar Profissional (self/ADMIN) | PUT /api/Profissionais/{id} | 200 OK |
-| CT010 | Deletar Profissional com consultas | DELETE /api/Profissionais/{id} | 409 Conflict |
-| CT011 | Criar Consulta sem conflito | POST /api/Consultas | 201 Created |
-| CT012 | Criar Consulta em horário conflitante | POST /api/Consultas | 409 Conflict |
-| CT013 | Listar Consultas com escopo por perfil | GET /api/Consultas | 200 OK (somente do usuário ou todas se ADMIN) |
-| CT014 | Atualizar Consulta (status/regra) | PUT /api/Consultas/{id} | 200 OK (ou 400/409 se regra violada) |
-| CT015 | Remover Consulta (ADMIN) | DELETE /api/Consultas/{id} | 204 No Content |
+## Endpoints principais
+Base URL (Dev):
+- HTTPS: https://localhost:7098
+- HTTP: http://localhost:5054 (redireciona para HTTPS)
 
-## 3. Casos de Erro/Segurança
-- Sem token: endpoints protegidos devem retornar 401.
-- Token de perfil incorreto: 403 quando tentar acessar recurso não permitido.
-- Payload inválido: 400 Bad Request com mensagem amigável.
+Cabeçalhos comuns:
+- Authorization: Bearer <TOKEN>
+- Content-Type: application/json
 
-## 4. Não Funcionais (sugestões)
-- Carga moderada: 10-50 req/s em GET /api/Consultas e POST /api/Consultas por 1-3 minutos (JMeter/Locust).
-- Segurança: passagem com OWASP ZAP para vetores comuns (XSS, SQLi). Observação: API usa EF Core com parâmetros, risco de SQLi reduzido; ainda assim testar.
+### Auth
+- POST /api/auth/login
+- POST /api/auth/register
 
-## 5. Aceite
-- Todos os casos funcionais prioritários (RF001-RF005) passando.
-- Respostas de erro padronizadas e com status HTTP corretos.
+Exemplo (login ADMIN):
+Request:
+POST /api/auth/login
+{
+	"email": "admin@sghss.local",
+	"senha": "Admin@123"
+}
+Response 200:
+{
+	"token": "<jwt>",
+	"idUsuario": 1,
+	"email": "admin@sghss.local",
+	"perfil": "ADMIN"
+}
 
-## 6. Evidências
-- Prints do Insomnia (login, criação, conflitos, autorizações).
-- Logs da aplicação (se necessário, anexar trechos relevantes).
+### Pacientes
+- GET /api/Pacientes (ADMIN, PROFISSIONAL)
+- GET /api/Pacientes/{id} (ADMIN, PROFISSIONAL, PACIENTE-próprio)
+- PUT /api/Pacientes/{id} (ADMIN, PROFISSIONAL [relação ativa], PACIENTE-próprio com restrições)
+- DELETE /api/Pacientes/{id} (ADMIN)
+
+Validações:
+- CPF válido e único (409), RG único (409)
+- PROFISSIONAL precisa de relação ATIVA para atualizar (403 se ausente/inativa)
+
+### Consultas
+- POST /api/Consultas (cria/reativa relação automaticamente)
+- GET /api/Consultas (ADMIN todas; PROFISSIONAL as suas; PACIENTE as suas)
+- GET /api/Consultas/{id}
+- PUT /api/Consultas/{id}
+- DELETE /api/Consultas/{id} (ADMIN)
+
+### Relações
+- POST /api/Relacoes/ativar (ADMIN)
+- PUT /api/Relacoes/inativar (ADMIN)
+
+## Casos de Teste (CT)
+| ID | Descrição | Perfil | Endpoint | Entrada | Resultado Esperado |
+|----|-----------|--------|----------|---------|--------------------|
+| CT-LOGIN-ADMIN-200 | Login como ADMIN | — | POST /api/auth/login | email/senha válidos | 200 + JWT |
+| CT-UNAUTH-401 | Acesso sem token | — | GET /api/Pacientes | — | 401 Unauthorized |
+| CT-LIST-PAC-200 | Listar pacientes | ADMIN | GET /api/Pacientes | — | 200 OK (lista) |
+| CT-REG-PAC-201 | Registrar paciente | — | POST /api/auth/register | Perfil=PACIENTE + dados válidos | 201 Created + JWT |
+| CT-REG-PAC-409 | CPF duplicado | — | POST /api/auth/register | CPF já usado | 409 Conflict |
+| CT-REG-PROF-201 | Registrar profissional | — | POST /api/auth/register | Perfil=PROFISSIONAL + dados válidos | 201 Created + JWT |
+| CT-PUT-PAC-403-NR | Profissional sem relação atualiza paciente | PROFISSIONAL | PUT /api/Pacientes/{id} | Update simples | 403 Forbidden |
+| CT-CONSULTA-201 | Criar consulta (cria relação) | ADMIN/PROF/PAC | POST /api/Consultas | par prof-paciente | 201 Created + relação ativa |
+| CT-PUT-PAC-200-R | Atualizar com relação ativa | PROFISSIONAL | PUT /api/Pacientes/{id} | Update simples | 200 OK |
+| CT-REL-INAT-200 | Inativar relação | ADMIN | PUT /api/Relacoes/inativar | ids do par | 200 OK |
+| CT-PUT-PAC-403-INAT | Atualizar com relação inativa | PROFISSIONAL | PUT /api/Pacientes/{id} | Update | 403 Forbidden |
+| CT-REL-ATIV-200 | Ativar relação | ADMIN | POST /api/Relacoes/ativar | ids do par | 200 OK |
+| CT-PUT-PAC-200-ATV | Atualizar após reativar | PROFISSIONAL | PUT /api/Pacientes/{id} | Update | 200 OK |
+
+## Fluxo sugerido (execução guiada)
+1) Login ADMIN e guardar token.
+2) Registrar PACIENTE (CPF válido) e PROFISSIONAL (CPF válido).
+3) Como ADMIN, obter IDs via GET /api/Pacientes e /api/Profissionais (filtrar por EmailUsuario).
+4) Como PROFISSIONAL, tentar PUT no paciente recém-criado (403 esperado).
+5) Criar consulta (ADMIN, PROF ou PAC) entre o par para ativar relação.
+6) Repetir PUT como PROFISSIONAL (200 esperado).
+7) Inativar relação (ADMIN) e verificar PUT volta a 403.
+8) Reativar relação (ADMIN) e verificar PUT volta a 200.
+
+## Exemplos de Payloads
+- Registro PACIENTE:
+{
+	"email": "paciente+<uniq>@sghss.local",
+	"senha": "Senha@123",
+	"perfil": "PACIENTE",
+	"pacienteData": {
+		"nomeCompleto": "Paciente Teste",
+		"dataNascimento": "1990-05-10",
+		"cpf": "<CPF_VALIDO>",
+		"telefone": "11999999999",
+		"endereco": "Rua X, 123",
+		"historicoClinico": "—",
+		"rg": "RG123<uniq>",
+		"sexo": "M",
+		"convenio": "Particular",
+		"emailPaciente": "paciente+<uniq>@mail.com"
+	}
+}
+
+- Registro PROFISSIONAL:
+{
+	"email": "prof+<uniq>@sghss.local",
+	"senha": "Senha@123",
+	"perfil": "PROFISSIONAL",
+	"profissionalData": {
+		"nomeCompleto": "Dr. Teste",
+		"cpf": "<CPF_VALIDO>",
+		"rg": "PRG<uniq>",
+		"crmOuConselho": "CRM<uniq>",
+		"especialidade": "Clínico Geral",
+		"telefone": "11988888888",
+		"emailProfissional": "prof+<uniq>@mail.com",
+		"disponibilidadeAgenda": "Seg-Sex 9-17h"
+	}
+}
+
+- Criar Consulta (ADMIN):
+{
+	"idPaciente": <idPaciente>,
+	"idProfissional": <idProfissional>,
+	"dataHoraConsulta": "2025-11-20T14:00:00Z",
+	"tipoConsulta": "Presencial",
+	"observacoes": "Consulta de rotina"
+}
+
+- Ativar/Inativar Relação (ADMIN):
+{
+	"idProfissional": <idProfissional>,
+	"idPaciente": <idPaciente>
+}
+
+## Evidências (prints)
+- Login (ADMIN) – 200
+- GET /api/Pacientes sem token – 401
+- GET /api/Pacientes com token ADMIN – 200
+- PUT /api/Pacientes/{id} com PROFISSIONAL sem relação – 403
+- POST /api/Consultas – 201 (mostra pares)
+- PUT /api/Pacientes/{id} com PROFISSIONAL com relação – 200
+- PUT /api/Relacoes/inativar – 200
+- PUT /api/Pacientes/{id} com relação inativa – 403
+- POST /api/Relacoes/ativar – 200
+- PUT /api/Pacientes/{id} após ativar – 200
+
+Dica: use a coleção Insomnia (full) já inclusa em assistiveFiles; preencha os bodies e tokens conforme acima e capture os screenshots.

@@ -5,6 +5,8 @@ using SGHSS_Backend.DTOs.Relacoes;
 using SGHSS_Backend.Models.Exceptions;
 using SGHSS_Backend.Services;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace SGHSS_Backend.Controllers;
 
@@ -24,6 +26,11 @@ public class RelacoesController : ControllerSGHSS
     /// Ativa (ou cria) a relação entre um profissional e um paciente.
     /// </summary>
     [HttpPost("ativar")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [SwaggerRequestExample(typeof(RelacaoRequest), typeof(SGHSS_Backend.Swagger.Examples.Relacoes.RelacaoRequestExample))]
     public async Task<IActionResult> Ativar([FromBody] RelacaoRequest request)
     {
         try
@@ -42,6 +49,11 @@ public class RelacoesController : ControllerSGHSS
     /// Inativa a relação entre um profissional e um paciente.
     /// </summary>
     [HttpPut("inativar")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [SwaggerRequestExample(typeof(RelacaoRequest), typeof(SGHSS_Backend.Swagger.Examples.Relacoes.RelacaoRequestExample))]
     public async Task<IActionResult> Inativar([FromBody] RelacaoRequest request)
     {
         try

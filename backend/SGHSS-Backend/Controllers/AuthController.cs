@@ -3,6 +3,8 @@ using SGHSS_Backend.Data;
 using SGHSS_Backend.DTOs.Auth;
 using SGHSS_Backend.Models.Exceptions;
 using SGHSS_Backend.Services;
+using Microsoft.AspNetCore.Http;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace SGHSS_Backend.Controllers;
 
@@ -24,6 +26,10 @@ public class AuthController : ControllerSGHSS
     /// <param name="request">Dados de login (email e senha).</param>
     /// <returns>Token JWT se o login for bem-sucedido, ou erro de autenticação.</returns>
     [HttpPost("login")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [SwaggerRequestExample(typeof(LoginRequest), typeof(SGHSS_Backend.Swagger.Examples.Auth.LoginRequestExample))]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         try
@@ -48,6 +54,10 @@ public class AuthController : ControllerSGHSS
     /// <param name="request">Dados de registro (email, senha e perfil).</param>
     /// <returns>Dados do usuário registrado e token JWT, ou erro de validação/conflito.</returns>
     [HttpPost("register")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [SwaggerRequestExample(typeof(RegisterRequest), typeof(SGHSS_Backend.Swagger.Examples.Auth.RegisterPacienteRequestExample))]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         try

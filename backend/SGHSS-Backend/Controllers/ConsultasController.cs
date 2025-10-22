@@ -4,6 +4,8 @@ using SGHSS_Backend.Data;
 using SGHSS_Backend.DTOs.Consultas;
 using SGHSS_Backend.Models.Exceptions;
 using SGHSS_Backend.Services;
+using Microsoft.AspNetCore.Http;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace SGHSS_Backend.Controllers;
 
@@ -23,6 +25,12 @@ public class ConsultasController : ControllerSGHSS
     /// Cria uma consulta. PACIENTE agenda para si; PROFISSIONAL na própria agenda; ADMIN para qualquer.
     /// </summary>
     [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [SwaggerRequestExample(typeof(ConsultaCreateRequest), typeof(SGHSS_Backend.Swagger.Examples.Consultas.ConsultaCreateRequestExample))]
     public async Task<IActionResult> Create([FromBody] ConsultaCreateRequest request)
     {
         try
@@ -44,6 +52,8 @@ public class ConsultasController : ControllerSGHSS
     /// Lista consultas de acordo com o perfil: ADMIN todas, PROFISSIONAL só as suas, PACIENTE só as suas.
     /// </summary>
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMyConsultas()
     {
         try
@@ -59,6 +69,10 @@ public class ConsultasController : ControllerSGHSS
     }
 
     [HttpGet("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(int id)
     {
         try
@@ -74,6 +88,13 @@ public class ConsultasController : ControllerSGHSS
     }
 
     [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [SwaggerRequestExample(typeof(ConsultaUpdateRequest), typeof(SGHSS_Backend.Swagger.Examples.Consultas.ConsultaUpdateRequestExample))]
     public async Task<IActionResult> Update(int id, [FromBody] ConsultaUpdateRequest request)
     {
         try
@@ -93,6 +114,10 @@ public class ConsultasController : ControllerSGHSS
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "ADMIN")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
         try

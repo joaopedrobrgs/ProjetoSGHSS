@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using SGHSS_Backend.Models.Exceptions;
 using SGHSS_Backend.Data; // Adicione este using
+using Microsoft.AspNetCore.Http;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace SGHSS_Backend.Controllers
 {
@@ -28,8 +30,11 @@ namespace SGHSS_Backend.Controllers
         /// Endpoint: GET /api/Pacientes
         /// </summary>
         /// <returns>Uma lista de pacientes.</returns>
-        [HttpGet]
+    [HttpGet]
         [Authorize(Roles = "ADMIN,PROFISSIONAL")] // Apenas ADMIN ou PROFISSIONAL podem listar
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<IEnumerable<PacienteResponse>>> GetPacientes()
         {
             try
@@ -50,8 +55,12 @@ namespace SGHSS_Backend.Controllers
         /// </summary>
         /// <param name="id">ID do paciente.</param>
         /// <returns>Os dados do paciente.</returns>
-        [HttpGet("{id}")]
+    [HttpGet("{id}")]
         [Authorize(Roles = "ADMIN,PROFISSIONAL,PACIENTE")] // ADMIN/PROFISSIONAL ou o próprio paciente
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetPacienteById(int id)
         {
             try
@@ -74,9 +83,16 @@ namespace SGHSS_Backend.Controllers
         /// <param name="id">ID do paciente a ser atualizado.</param>
         /// <param name="request">Novos dados do paciente.</param>
         /// <returns>O paciente atualizado.</returns>
-        [HttpPut("{id}")]
+    [HttpPut("{id}")]
         [Authorize(Roles = "ADMIN,PROFISSIONAL,PACIENTE")] // Apenas ADMIN ou PROFISSIONAL podem atualizar (Paciente vai atualizar apenas dados pessoais pela API de Usuário)
-        public async Task<IActionResult> PutPaciente(int id, [FromBody] PacienteUpdateRequest request)
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [SwaggerRequestExample(typeof(PacienteUpdateRequest), typeof(SGHSS_Backend.Swagger.Examples.Pacientes.PacienteUpdateRequestExample))]
+    public async Task<IActionResult> PutPaciente(int id, [FromBody] PacienteUpdateRequest request)
         {
             try
             {
@@ -104,8 +120,12 @@ namespace SGHSS_Backend.Controllers
         /// </summary>
         /// <param name="id">ID do paciente a ser deletado.</param>
         /// <returns>Status de sucesso ou falha.</returns>
-        [HttpDelete("{id}")]
+    [HttpDelete("{id}")]
         [Authorize(Roles = "ADMIN")] // Apenas ADMIN pode deletar
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeletePaciente(int id)
         {
             try

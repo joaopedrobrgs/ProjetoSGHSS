@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using SGHSS_Backend.Data.Seed;
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace SGHSS_Backend
 {
@@ -51,6 +53,57 @@ namespace SGHSS_Backend
 
             builder.Services.AddAuthorization(); // Habilita a autorização
 
+            // Swagger/OpenAPI
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "SGHSS API",
+                    Version = "v1",
+                    Description = "Sistema de Gestão Hospitalar e de Serviços de Saúde (Back-end)"
+                });
+
+                // JWT Bearer auth no Swagger
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "Insira o token JWT no campo abaixo (sem aspas). Ex: Bearer eyJhbGciOi...",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT"
+                });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
+
+                // XML docs (se gerado)
+                var xmlFile = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + ".xml";
+                var xmlPath = System.IO.Path.Combine(AppContext.BaseDirectory, xmlFile);
+                if (System.IO.File.Exists(xmlPath))
+                {
+                    c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+                }
+
+                // Habilita exemplos em requests/responses
+                c.ExampleFilters();
+            });
+
+            // Registra providers de exemplos
+            builder.Services.AddSwaggerExamplesFromAssemblyOf<SGHSS_Backend.Swagger.Examples.Auth.LoginRequestExample>();
+
             // CORS básico para consumo por front-ends locais
             builder.Services.AddCors(options =>
             {
@@ -71,6 +124,16 @@ namespace SGHSS_Backend
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
+
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "SGHSS API v1");
+                    options.DisplayRequestDuration();
+                });
+            }
 
             app.UseHttpsRedirection();
 

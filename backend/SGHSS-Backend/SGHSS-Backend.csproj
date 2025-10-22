@@ -7,6 +7,8 @@
     <InvariantGlobalization>false</InvariantGlobalization>
     <RootNamespace>SGHSS_Backend</RootNamespace>
     <UserSecretsId>c0510205-292f-4397-a9a4-152b1865ed51</UserSecretsId>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +23,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="7.0.15" />
   </ItemGroup>
 
 </Project>
