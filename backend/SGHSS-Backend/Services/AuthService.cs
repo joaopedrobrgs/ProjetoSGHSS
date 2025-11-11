@@ -26,13 +26,13 @@ public class AuthService
         try
         {
             // 1. Encontrar o usuário pelo email
-            var usuario = await context.Usuarios.FirstOrDefaultAsync(u => u.Email == request.Email) ?? throw new Exception("Email e/ou senha inválido(s). Verifique seus dados e tente novamente.");
+            var usuario = await context.Usuarios.FirstOrDefaultAsync(u => u.Email == request.Email) ?? throw new CustomException("Email e/ou senha inválido(s). Verifique seus dados e tente novamente.");
 
             // 2. Verificar a senha (compare o hash da senha)
             // IMPORTANTE: Em um sistema real, você usaria uma biblioteca segura para hash/verificação de senha (ex: BCrypt.Net)
             if (!PasswordHasher.VerifyPassword(request.Senha, usuario.Senha))
             {
-                throw new Exception("Email e/ou senha inválido(s). Verifique seus dados e tente novamente."); // Senha incorreta
+                throw new CustomException("Email e/ou senha inválido(s). Verifique seus dados e tente novamente."); // Senha incorreta
             }
 
             // 3. Gerar token JWT

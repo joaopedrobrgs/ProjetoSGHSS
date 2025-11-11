@@ -25,7 +25,7 @@ public class RelacoesController : ControllerSGHSS
     /// <summary>
     /// Ativa (ou cria) a relação entre um profissional e um paciente.
     /// </summary>
-    [HttpPost("ativar")]
+    [HttpPut("ativar")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
