@@ -26,14 +26,8 @@ Seed (usuário ADMIN):
 3. Clique em "Authorize" (canto superior direito), informe `Bearer SEU_TOKEN`.
 4. Execute os endpoints desejados (vide regras de autorização no plano de testes).
 
-## Testar com Insomnia
-- Coleção completa: `assistiveFiles/Insomnia_SGHSS.json`
-  - Ambiente já inclui: `base_url`, `admin_email`, `admin_senha`, `jwt_token`, `idPaciente`, `idProfissional`.
-  - Dica: primeiro faça o Login (request Auth/Login), copie o `token` e atribua em `jwt_token` do ambiente.
-  - Use `GET /api/Pacientes` e `GET /api/Profissionais` para descobrir IDs e, se necessário, ajuste `idPaciente`/`idProfissional`.
-
-Guia de prints: `assistiveFiles/prints/README.md`
-Plano de testes detalhado: `assistiveFiles/TestPlan_SGHSS.md`
+## Testar com Postman
+- Coleção completa: `assistiveFiles/postman/SGHSS.postman_collection.json` / `assistiveFiles/postman/SGHSS.postman_environment.json`
 
 ## Regras de autorização (resumo)
 - ADMIN: acesso total a CRUDs e gestão de relações.
